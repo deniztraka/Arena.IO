@@ -1,6 +1,7 @@
 ﻿
 var playerList = [];
 var currentPlayer;
+var tempLocalPlayer = {};
 var upKey;
 var downKey;
 var leftKey;
@@ -9,8 +10,9 @@ var wKey;
 var aKey;
 var dKey;
 var sKey;
+var socket;
 
-var socket = io();
+
 
 var checkMovement = function (socket) {
     if (upKey.isDown || wKey.isDown) {
@@ -34,6 +36,10 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
     }, 
     create: function () {
         var mushroom = game.cache.checkImageKey('mushroom');
+
+        tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
+        tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
+
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
@@ -43,6 +49,9 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
         sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
         aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
         dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+
+        
+        createSocketEvents();
     },
     update: function () {
         //process player rotation
@@ -58,73 +67,85 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
     }
 });
 
-socket.on(Constants.EventNames.Connect, function () {
-    
-});
 
-socket.on(Constants.CommandNames.AlreadyLoggedInPlayerList, function (players) {
-    playerList = players;
-    for (var i = 0; i < playerList.length; i++) {
-        var player = playerList[i];
+var createSocketEvents = function () {
+    socket = io();
+    socket.on(Constants.EventNames.Connect, function () {
+
+    });
+
+    socket.on(Constants.CommandNames.AlreadyLoggedInPlayerList, function (players) {
+        playerList = players;
+        for (var i = 0; i < playerList.length; i++) {
+            var player = playerList[i];
+            player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
+            player.sprite.anchor.setTo(0.5, 0.5);
+            console.log("this should be already logged in player" + player.id);
+        };
+    });
+
+    socket.on(Constants.CommandNames.PlayerInfo, function (player) {
+        currentPlayer = player;
+        currentPlayer.sprite = tempLocalPlayer.sprite;
+
+        playerList.push(currentPlayer);
+        console.log("this should be me" + currentPlayer.id);
+    });
+
+    socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
         player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
         player.sprite.anchor.setTo(0.5, 0.5);
-        console.log("this should be already logged in player" + player.id);
-    };
-});
 
-socket.on(Constants.CommandNames.PlayerInfo, function (player) {
-    currentPlayer = player;
-    currentPlayer.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-    currentPlayer.sprite.anchor.setTo(0.5, 0.5);
-    playerList.push(currentPlayer);
-    console.log("this should be me" + currentPlayer.id);
-});
+        playerList.push(player);
+        console.log("this should be new comer" + player.id);
+    });
 
-socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
-    player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-    player.sprite.anchor.setTo(0.5, 0.5);
-    
-    playerList.push(player);
-    console.log("this should be new comer" + player.id);
-});
+    socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
+        console.log("this should be disconnected user info" + disconnectedPlayer.id);
+        for (var i = 0; i < playerList.length; i++) {
+            var player = playerList[i];
+            if (disconnectedPlayer.id == player.id) {
+                player.sprite.destroy();
+            }
+        };
+    });
 
-socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
-    console.log("this should be disconnected user info" + disconnectedPlayer.id);
-    for (var i = 0; i < playerList.length; i++) {
-        var player = playerList[i];
-        if (disconnectedPlayer.id == player.id) {
-            player.sprite.destroy();
+    socket.on(Constants.CommandNames.PlayerPositionsUpdate, function (playerPositions) {
+        for (var i = 0; i < playerPositions.length; i++) {
+            if (playerPositions[i] != null) {
+                var pos = playerPositions[i];
+
+                for (var j = 0; j < playerList.length; j++) {
+                    var player = playerList[j];
+                    if (player.id == pos.id) {
+                        if (player.sprite) {
+                            if (player.sprite.position) {
+                                player.sprite.position.x = pos.x;
+                                player.sprite.position.y = pos.y;
+                            }
+                        }
+                    }
+                };
+            }
         }
-    };
-});
+    });
 
-socket.on(Constants.CommandNames.PlayerPositionsUpdate, function (playerPositions) {
-    for (var i = 0; i < playerPositions.length; i++) {
-        if (playerPositions[i] != null) {
-            var pos = playerPositions[i];
-            
-            for (var j = 0; j < playerList.length; j++) {
-                var player = playerList[j];
-                if (player.id == pos.id) {
-                    player.sprite.position.x = pos.x;
-                    player.sprite.position.y = pos.y;
-                }
-            };
-        }
-    }
-});
+    socket.on(Constants.CommandNames.PlayerRotationsUpdate, function (playerRotations) {
+        for (var i = 0; i < playerRotations.length; i++) {
+            if (playerRotations[i] != null) {
+                var rot = playerRotations[i];
 
-socket.on(Constants.CommandNames.PlayerRotationsUpdate, function (playerRotations) {
-    for (var i = 0; i < playerRotations.length; i++) {
-        if (playerRotations[i] != null) {
-            var rot = playerRotations[i];
-            
-            for (var j = 0; j < playerList.length; j++) {
-                var player = playerList[j];
-                if (player.id == rot.id) {
-                    player.sprite.rotation = rot.rotation;
-                }
-            };
+                for (var j = 0; j < playerList.length; j++) {
+                    var player = playerList[j];
+                    if (player.id == rot.id) {
+                        if (player.sprite) {
+                            if (player.rotation) {
+                                player.sprite.rotation = rot.rotation;
+                            }
+                        }
+                    }
+                };
+            }
         }
-    }
-});
+    });
+};
