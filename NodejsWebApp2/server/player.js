@@ -1,6 +1,7 @@
 ﻿var p2 = require('p2');
 var player = function (socket) {    
     this.id = Math.floor(100 * Math.random());
+    this.nickname = socket.handshake.query["nickname"];
     this.client = { sessionId : socket.id };
     this.color = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);    
     p2.Body.call(this, {
@@ -22,7 +23,8 @@ var player = function (socket) {
             x: this.position[0],
             y: this.position[1]
         },
-        color: this.color
+        color: this.color,
+        nickname: this.nickname
     };
 };
 
