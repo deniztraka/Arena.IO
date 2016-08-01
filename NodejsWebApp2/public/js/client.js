@@ -18,11 +18,11 @@ var style;
 var checkMovement = function (socket) {
     if (upKey.isDown || wKey.isDown) {
         socket.emit(Constants.EventNames.OnUpKeyPressed, true);
-        currentPlayer.sprite.position.y++;
+        currentPlayer.sprite.position.y--;
     }
     else if (downKey.isDown || sKey.isDown) {
         socket.emit(Constants.EventNames.OnDownKeyPressed, true);
-        currentPlayer.sprite.position.y--;
+        currentPlayer.sprite.position.y++;
     }
 
     if (leftKey.isDown || aKey.isDown) {

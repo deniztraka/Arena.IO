@@ -108,7 +108,7 @@ var sendPosRotData = function () {
     io.emit(Constants.CommandNames.PlayerPosRotUpdate, playerPosRotData);
 };
 
-var timeStep = 1 / 1;
+var timeStep = 1 / 30;
 // The "Game loop". Could be replaced by, for example, requestAnimationFrame. 
 setInterval(function () {
 
