@@ -14,8 +14,7 @@
         DisconnectedPlayerInfo : "disconnectedPlayerInfo",
         PlayerInfo : "playerInfo",
         AlreadyLoggedInPlayerList : "alreadyLoggedInPlayerList",
-        PlayerPositionsUpdate : "playerPositionsUpdate",
-        PlayerRotationsUpdate : "playerRotationsUpdate"
+        PlayerPosRotUpdate: "playerPosRotUpdate"
     }
 };
 
