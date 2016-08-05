@@ -37,6 +37,7 @@ var checkMovement = function (socket) {
 
 var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
     preload: function () {
+        game.time.advancedTiming = true;
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
 
@@ -71,7 +72,7 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
         checkMovement(socket);
     },
     render: function () {
-
+        game.debug.text(game.time.fps || '--', 2, 14, "#00ff00"); 
     }
 });
 
