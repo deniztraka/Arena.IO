@@ -69,12 +69,15 @@ var onPlayerConnect = function (socket, io) {
 
     var player = new Player(socket);
     world.addBody(player);
-
     console.log('a user is connected. id:' + player.id);
 
     socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
         onPlayerDisconnect(player, socket);
-    });
+    });//Player disconnected event
+    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);//send playerInfo to the sender
+    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);//send playerInfo to the all clients except sender
+
+    //Movement events
     socket.on(Constants.EventNames.OnUpKeyPressed, function () {
         onUpKeyPressed(player);
     });
@@ -90,10 +93,6 @@ var onPlayerConnect = function (socket, io) {
     socket.on(Constants.EventNames.OnUpdateRotation, function (rotation) {
         onUpdateRotation(player, rotation);
     });
-
-    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);//send playerInfo to the sender
-
-    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);//send playerInfo to the all clients except sender
 };
 
 var sendPosRotData = function () {
@@ -102,18 +101,46 @@ var sendPosRotData = function () {
     for (var i = 0; i < world.bodies.length; i++) {
         var player = world.bodies[i];
 
-        playerPosRotData[player.id] = { x: player.position[0], y: player.position[1], id: player.id, rotation: player.angle };
+        playerPosRotData[player.id] = { x: player.interpolatedPosition[0], y: player.interpolatedPosition[1], id: player.id, rotation: player.interpolatedAngle };
     };
 
     io.emit(Constants.CommandNames.PlayerPosRotUpdate, playerPosRotData);
 };
 
-var timeStep = 1 / 30;
-// The "Game loop". Could be replaced by, for example, requestAnimationFrame. 
+var lastTimeSeconds;
+var totalElapsedTimeFromSeconds = 0;
+var serverProcessFrequency = 1 / 60;
+var gameTimeUpdateFrequencyFromSeconds = 1;
+var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
+
+var maxSubSteps = 10;
+
+//Main Game Loop
 setInterval(function () {
+    totalElapsedTimeFromSeconds += serverProcessFrequency;
+    deltaTime = totalElapsedTimeFromSeconds - lastTimeSeconds;
 
+    processWorld();
+
+    //Sending elapsed game time to all clients
+    executeByIntervalFromSeconds(gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
+    lastTimeSeconds = totalElapsedTimeFromSeconds;
+}, 1000 * serverProcessFrequency);
+
+var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
+    var mod = totalElapsedTimeFromSeconds % frequency;
+    if (mod < serverProcessFrequency) {
+        functionToProcess();
+    }
+}
+
+var processWorld = function () {
     // The step method moves the bodies forward in time.
-    world.step(timeStep);
+    world.step(serverProcessFrequency, deltaTime, maxSubSteps);
+    executeByIntervalFromSeconds(positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
+    //sendPosRotData();
+};
 
-    sendPosRotData();
-}, 1000 * timeStep);
+var sendGameTimeToAllClients = function () {
+    io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));
+}

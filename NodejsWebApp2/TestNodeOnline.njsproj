@@ -37,10 +37,16 @@
     <Compile Include="server\player.js" />
     <Content Include="index.html" />
     <Content Include="package.json" />
+    <Content Include="public\assets\fonts\bitmap\carrier_command.png" />
+    <Content Include="public\assets\fonts\bitmap\carrier_command.xml" />
+    <Content Include="public\assets\fonts\bitmap\nokia16.png" />
+    <Content Include="public\assets\fonts\bitmap\nokia16.xml" />
     <Content Include="public\assets\sprites\red_ball.png" />
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="public\assets\fonts\" />
+    <Folder Include="public\assets\fonts\bitmap\" />
     <Folder Include="shared\" />
     <Folder Include="server\" />
     <Folder Include="public\" />

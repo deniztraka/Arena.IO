@@ -12,8 +12,18 @@ var dKey;
 var sKey;
 var socket;
 var style;
+var totalGameTimeInSeconds=0;
+var gameTimeText;
 
+var buildGameTimeText = function (totalGameTimeFromSeconds) {
 
+    //Todo : Get time string hh:mm:ss
+    var seconds = totalGameTimeFromSeconds % 60;
+    var minutes = Math.floor(totalGameTimeFromSeconds / 60);
+    var hours = Math.floor(minutes / 60);
+
+    return hours + ':' + minutes + ':' + seconds;
+};
 
 var checkMovement = function (socket) {
     if (upKey.isDown || wKey.isDown) {
@@ -38,13 +48,12 @@ var checkMovement = function (socket) {
 var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
+        //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
-
-
     },
     create: function () {
-        var mushroom = game.cache.checkImageKey('mushroom');
+        //var playerBall = game.cache.checkImageKey('mushroom');
 
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
@@ -59,7 +68,10 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
         aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
         dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
 
-
+        //gameTimeText = game.add.bitmapText(game.world.bounds.width, 10, 'carrier_command', '--');
+        //gameTimeText.anchor.x = 1;
+        //gameTimeText.anchor.y = 0.5;
+        //gameTimeText.scale = new Phaser.Point(0.5,0.5);      
         createSocketEvents();
     },
     update: function () {
@@ -70,15 +82,19 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
         }
 
         checkMovement(socket);
+        //gameTimeText.text = "Alive Time: " + buildGameTimeText(totalGameTimeInSeconds);
+        //gameTimeText.updateText();        
     },
     render: function () {
         game.debug.text(game.time.fps || '--', 2, 14, "#00ff00"); 
+        //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
+        //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
     }
 });
 
 
 var createSocketEvents = function () {
-    socket = io(window.location.origin, { query: 'nickname=user' + Math.floor(1000 * Math.random()) });
+    socket = io(window.location.origin, { query: 'nickname=' + Math.floor(1000 * Math.random()) });
     socket.on(Constants.EventNames.Connect, function () {
 
     });
@@ -148,6 +164,10 @@ var createSocketEvents = function () {
                 }
             }
         }
+    });
+
+    socket.on("tick", function (tick) {
+        totalGameTimeInSeconds = tick;
     });
 };
 
