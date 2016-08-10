@@ -161,8 +161,9 @@ var sendPosRotData = function () {
                 id: player.id, 
                 rotation: player.interpolatedAngle,
                 weapon: {
-                    x: player.weapon.clientInfo.position.x,
-                    y: player.weapon.clientInfo.position.y
+                    x: player.weapon.interpolatedPosition[0],
+                    y: player.weapon.interpolatedPosition[1],
+                    rotation: player.weapon.interpolatedAngle
                 }
             };
         }
