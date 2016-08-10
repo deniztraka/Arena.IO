@@ -1,5 +1,11 @@
 ﻿var p2 = require('p2');
-var player = function (socket) {    
+var player = function (socket) {
+    function getWeaponInfo() {
+        if (this.weapon) { 
+            return this.weapon.clientInfo;
+        }
+    }
+
     this.id = Math.floor(100 * Math.random());
     this.nickname = socket.handshake.query["nickname"];
     this.client = { sessionId : socket.id };
@@ -10,6 +16,7 @@ var player = function (socket) {
         type: p2.Body.DYNAMIC
     });
     this.damping = 1;
+    this.isBodyAlive = true;
 
     var playerShape = new p2.Circle({ radius: 10 });
     playerShape.collisionGroup = Math.pow(2, 0);
@@ -20,11 +27,12 @@ var player = function (socket) {
         id: this.id,
         sessionId: this.client.sessionId,
         position : {
-            x: this.position[0],
-            y: this.position[1]
+            x: this.interpolatedPosition[0],
+            y: this.interpolatedPosition[1]
         },
         color: this.color,
-        nickname: this.nickname
+        nickname: this.nickname,
+        weapon : getWeaponInfo()
     };
 };
 

@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="public\js\client.js" />
     <Compile Include="server.js" />
+    <Compile Include="server\weapon.js" />
     <Compile Include="shared\js\common\constants.js" />
     <Compile Include="server\player.js" />
     <Content Include="index.html" />

@@ -7,14 +7,16 @@
         OnUpKeyPressed: "onUpKeyPressed",
         OnDownKeyPressed: "onDownKeyPressed",
         OnLeftKeyPressed: "onLeftKeyPressed",
-        OnRightKeyPressed: "onRightKeyPressed"
+        OnRightKeyPressed: "onRightKeyPressed",
+        OnMouseClicked: "onMouseClicked"
     },
     CommandNames : {
         NewLoginInfo : "newLoginInfo",
         DisconnectedPlayerInfo : "disconnectedPlayerInfo",
         PlayerInfo : "playerInfo",
         AlreadyLoggedInPlayerList : "alreadyLoggedInPlayerList",
-        PlayerPosRotUpdate: "playerPosRotUpdate"
+        PlayerPosRotUpdate: "playerPosRotUpdate",
+        MousePosition : "mousePosition"
     }
 };
 

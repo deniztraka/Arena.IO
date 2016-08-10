@@ -45,18 +45,23 @@ var checkMovement = function (socket) {
     }
 }
 
-var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
+var checkActions = function (socket) {    
+    if (game.input.activePointer.leftButton.isDown) {
+        socket.emit(Constants.EventNames.OnMouseClicked, {x:game.input.mousePointer.x, y:game.input.mousePointer.y});       
+    }   
+};
+
+var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
-    create: function () {
-        //var playerBall = game.cache.checkImageKey('mushroom');
+    create: function () {        
 
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
-        tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
+        tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);        
 
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
@@ -76,12 +81,12 @@ var game = new Phaser.Game(300, 300, Phaser.AUTO, 'test multi game', {
     },
     update: function () {
         //process player rotation
-        if (currentPlayer && currentPlayer.sprite) {
-            currentPlayer.sprite.rotation = game.physics.arcade.angleToPointer(currentPlayer.sprite);
-            socket.emit(Constants.EventNames.OnUpdateRotation, currentPlayer.sprite.rotation);
+        if (currentPlayer && currentPlayer.sprite) {            
+            socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
         }
 
         checkMovement(socket);
+        checkActions(socket);
         //gameTimeText.text = "Alive Time: " + buildGameTimeText(totalGameTimeInSeconds);
         //gameTimeText.updateText();        
     },
@@ -115,6 +120,7 @@ var createSocketEvents = function () {
     socket.on(Constants.CommandNames.PlayerInfo, function (player) {
         currentPlayer = player;
         currentPlayer.sprite = tempLocalPlayer.sprite;
+
         style.fill = currentPlayer.color;
         currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
         currentPlayer.nicknameText.anchor.set(0.5);
