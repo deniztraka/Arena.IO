@@ -25,6 +25,13 @@ var buildGameTimeText = function (totalGameTimeFromSeconds) {
     return hours + ':' + minutes + ':' + seconds;
 };
 
+function kill(player) {
+    playerList[player.id].nicknameText.destroy();
+    playerList[player.id].sprite.destroy();
+    playerList[player.id].weapon.destroy();
+    delete playerList[player.id];
+}
+
 var checkMovement = function (socket) {
     if (upKey.isDown || wKey.isDown) {
         socket.emit(Constants.EventNames.OnUpKeyPressed, true);
@@ -45,7 +52,7 @@ var checkMovement = function (socket) {
     }
 }
 
-var attackRate = 500;
+var attackRate = 250;
 var nextAttack = 0;
 function attack() {
     if (game.time.now > nextAttack) {
@@ -71,9 +78,13 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
+        //game.world.setBounds(0, 0, 1920, 1920);
         
+
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
+        
+        //game.camera.follow(tempLocalPlayer.sprite);
         
         tempLocalPlayer.weapon = game.add.sprite(0, 0, 'paddle');
         tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
@@ -164,11 +175,15 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
         console.log("this should be disconnected user info" + disconnectedPlayer.id);
-        playerList[disconnectedPlayer.id].nicknameText.destroy();
-        playerList[disconnectedPlayer.id].sprite.destroy();
-        playerList[disconnectedPlayer.id].weapon.destroy();
-        delete playerList[disconnectedPlayer.id];
+        kill(disconnectedPlayer);       
     });
+    
+    socket.on(Constants.CommandNames.Killed, function (killedPlayer) {
+        console.log("player " + killedPlayer.id + " is killed.");
+        kill(killedPlayer);
+    });
+    
+
     
     socket.on(Constants.CommandNames.PlayerPosRotUpdate, function (playersData) {
         for (var id in playersData) {

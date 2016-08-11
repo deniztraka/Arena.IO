@@ -16,7 +16,8 @@
         PlayerInfo : "playerInfo",
         AlreadyLoggedInPlayerList : "alreadyLoggedInPlayerList",
         PlayerPosRotUpdate: "playerPosRotUpdate",
-        MousePosition : "mousePosition"
+        MousePosition : "mousePosition",
+        Killed : "killed"
     }
 };
 

@@ -11,6 +11,12 @@ function log(message) {
     console.log(getDateTime() + " || " + message);
 }
 
+function kill(playerBody) {
+    world.removeConstraint(playerBody.weaponConstraint);
+    world.removeBody(playerBody.weapon);
+    world.removeBody(playerBody);
+}
+
 var world = new p2.World({
     gravity: [0, 0]
 });
@@ -32,9 +38,7 @@ io.on(Constants.EventNames.Connection, function (socket) {
 var onPlayerDisconnect = function (player, socket) {
     console.log('user is disconnected. id:' + player.id);
     socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
-    world.removeConstraint(player.weaponConstraint);
-    world.removeBody(player.weapon);
-    world.removeBody(player);
+    kill(player);    
 };
 
 var getClientPlayerList = function () {
@@ -49,13 +53,12 @@ var getClientPlayerList = function () {
     return clientList;
 };
 
-var slashRate = 0.5;
+var slashRate = 0.25;
 var nextAttack = 0;
 function attack(player,mousePosition) {
     if (totalElapsedTimeFromSeconds > nextAttack) {
         nextAttack = totalElapsedTimeFromSeconds + slashRate;
         return true;
-        //processSlash();
     } else { 
         return false;
     }
@@ -225,9 +228,14 @@ var processWorld = function () {
 };
 
 world.on('beginContact', function (evt) {
-    if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
+    if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive ) {
         var attacker = world.getBodyById(evt.bodyB.playerId);
-        log(attacker.nickname + " is attacked to " + evt.bodyA.nickname);
+        evt.bodyA.health -= evt.bodyB.damage;
+        log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);
+        if (evt.bodyA.health <= 0) {
+            io.emit(Constants.CommandNames.Killed, evt.bodyA.clientInfo);//send playerInfo to the all clients
+            kill(evt.bodyA);
+        }
     }
 });
 
