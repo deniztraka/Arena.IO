@@ -7,6 +7,10 @@ var p2 = require('p2');
 var Player = require('./server/player.js');
 var Weapon = require('./server/weapon.js');
 
+function log(message) {
+    console.log(getDateTime() + " || " + message);
+}
+
 var world = new p2.World({
     gravity: [0, 0]
 });
@@ -45,11 +49,22 @@ var getClientPlayerList = function () {
     return clientList;
 };
 
-function processSlash() {
+var slashRate = 0.5;
+var nextAttack = 0;
+function attack(player,mousePosition) {
+    if (totalElapsedTimeFromSeconds > nextAttack) {
+        nextAttack = totalElapsedTimeFromSeconds + slashRate;
+        return true;
+        //processSlash();
+    } else { 
+        return false;
+    }
+}
+function processSlash(player, mousePosition) {
     var maxSlashDistance = 30;
     
-    var xDistance = (mousePos.x - characterBody.position[0]);
-    var yDistance = (mousePos.y - characterBody.position[1]);
+    var xDistance = (mousePosition.x - player.position[0]);
+    var yDistance = (mousePosition.y - player.position[1]);
     //var d = Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
     /*var slashPower = d * 0.3;
       	console.log(d);*/
@@ -66,33 +81,31 @@ function processSlash() {
         yDistance = -maxSlashDistance
     }
     
-    armBody.position[0] = armBody.position[0] + xDistance;
-    armBody.position[1] = armBody.position[1] + yDistance;
+    player.weapon.position[0] = player.weapon.position[0] + xDistance;
+    player.weapon.position[1] = player.weapon.position[1] + yDistance;
 };
 
-var onMouseClicked = function (player,mousePosition) {
-    console.log(player.nickname + " is clicked. x:" +mousePosition.x + " y:" + mousePosition.y);
-    //player.applyForce([0, -speed]);
+var onMouseClicked = function (player,mousePosition) {    
+    var canSlash = attack();
+    if (canSlash) {
+        processSlash(player, mousePosition);        
+    }    
 };
 
 var onUpKeyPressed = function (player) {
-    player.position[1]--;
-    //player.applyForce([0, -speed]);
+    player.position[1]--;    
 };
 
 var onDownKeyPressed = function (player) {
-    player.position[1]++;
-    //player.applyForce([0, speed]);
+    player.position[1]++;    
 };
 
 var onLeftKeyPressed = function (player) {
-    player.position[0]--;
-    //player.applyForce([-speed, 0]);
+    player.position[0]--;    
 };
 
 var onRightKeyPressed = function (player) {
-    player.position[0]++;
-    //player.applyForce([speed, 0]);
+    player.position[0]++;    
 };
 
 var onUpdateRotation = function (player, rotation) {
@@ -118,11 +131,16 @@ var onPlayerConnect = function (socket, io) {
     
     console.log('a user is connected. id:' + player.id);
     
+    //Player disconnected event
     socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
         onPlayerDisconnect(player, socket);
-    });//Player disconnected event
-    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);//send playerInfo to the sender
-    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);//send playerInfo to the all clients except sender
+    });
+
+    //send playerInfo to the sender
+    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
+
+    //send playerInfo to the all clients except sender
+    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
     
     //Mouse events
     socket.on(Constants.EventNames.OnMouseClicked, function (mousePosition) {
@@ -208,10 +226,36 @@ var processWorld = function () {
 
 world.on('beginContact', function (evt) {
     if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
-        console.log("yes");
+        var attacker = world.getBodyById(evt.bodyB.playerId);
+        log(attacker.nickname + " is attacked to " + evt.bodyA.nickname);
     }
 });
 
 var sendGameTimeToAllClients = function () {
     io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));
+}
+
+function getDateTime() {
+    
+    var date = new Date();
+    
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+    
+    var min = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+    
+    var sec = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+    
+    var year = date.getFullYear();
+    
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    
+    var day = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    
+    return year + "." + month + "." + day + " " + hour + ":" + min + ":" + sec;
+
 }

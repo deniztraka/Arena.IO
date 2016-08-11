@@ -7,7 +7,7 @@ var weapon = function (socket, playerPosition, playerId) {
     this.damage = 5;    
     p2.Body.call(this, {
         mass : 0.00000001,
-        position : [playerPosition[0] + 10, playerPosition[1]],
+        position : [playerPosition[0] + 10, playerPosition[1]-5],
         angle : -1.5707963268  
     });    
     this.isBodyAlive = false;

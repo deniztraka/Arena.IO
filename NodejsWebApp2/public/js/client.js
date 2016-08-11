@@ -12,16 +12,16 @@ var dKey;
 var sKey;
 var socket;
 var style;
-var totalGameTimeInSeconds=0;
+var totalGameTimeInSeconds = 0;
 var gameTimeText;
 
 var buildGameTimeText = function (totalGameTimeFromSeconds) {
-
+    
     //Todo : Get time string hh:mm:ss
     var seconds = totalGameTimeFromSeconds % 60;
     var minutes = Math.floor(totalGameTimeFromSeconds / 60);
     var hours = Math.floor(minutes / 60);
-
+    
     return hours + ':' + minutes + ':' + seconds;
 };
 
@@ -34,7 +34,7 @@ var checkMovement = function (socket) {
         socket.emit(Constants.EventNames.OnDownKeyPressed, true);
         currentPlayer.sprite.position.y++;
     }
-
+    
     if (leftKey.isDown || aKey.isDown) {
         socket.emit(Constants.EventNames.OnLeftKeyPressed, true);
         currentPlayer.sprite.position.x--;
@@ -45,10 +45,21 @@ var checkMovement = function (socket) {
     }
 }
 
-var checkActions = function (socket) {    
-    if (game.input.activePointer.leftButton.isDown) {
-        socket.emit(Constants.EventNames.OnMouseClicked, {x:game.input.mousePointer.x, y:game.input.mousePointer.y});       
-    }   
+var attackRate = 500;
+var nextAttack = 0;
+function attack() {
+    if (game.time.now > nextAttack) {
+        nextAttack = game.time.now + attackRate;
+        console.log("aatsasd");
+        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
+    }
+}
+
+var checkActions = function (socket) {
+    game.input.activePointer.leftButton.onDown.add(function () {
+        attack(socket); 
+        
+    }, this);    
 };
 
 var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
@@ -56,23 +67,27 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
+        game.load.image('paddle', '/public/assets/sprites/paddle.png');
         style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
-    create: function () {        
-
+    create: function () {
+        
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
-        tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);        
-
+        tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
+        
+        tempLocalPlayer.weapon = game.add.sprite(0, 0, 'paddle');
+        tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
+        
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-
+        
         wKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
         sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
         aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
         dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
-
+        
         //gameTimeText = game.add.bitmapText(game.world.bounds.width, 10, 'carrier_command', '--');
         //gameTimeText.anchor.x = 1;
         //gameTimeText.anchor.y = 0.5;
@@ -81,17 +96,17 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
     },
     update: function () {
         //process player rotation
-        if (currentPlayer && currentPlayer.sprite) {            
+        if (currentPlayer && currentPlayer.sprite) {
             socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
         }
-
+        
         checkMovement(socket);
         checkActions(socket);
         //gameTimeText.text = "Alive Time: " + buildGameTimeText(totalGameTimeInSeconds);
         //gameTimeText.updateText();        
     },
     render: function () {
-        game.debug.text(game.time.fps || '--', 2, 14, "#00ff00"); 
+        game.debug.text(game.time.fps || '--', 2, 14, "#00ff00");
         //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
         //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
     }
@@ -103,66 +118,81 @@ var createSocketEvents = function () {
     socket.on(Constants.EventNames.Connect, function () {
 
     });
-
+    
     socket.on(Constants.CommandNames.AlreadyLoggedInPlayerList, function (players) {
         playerList = players;
         for (var id in playerList) {
             var player = playerList[id];
             player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
             player.sprite.anchor.setTo(0.5, 0.5);
+            
+            player.weapon = game.add.sprite(0, 0, 'paddle');
+            player.weapon.anchor.setTo(0.5, 0.5);
+
             style.fill = player.color;
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
             console.log("this should be already logged in player" + player.id);
         };
     });
-
+    
     socket.on(Constants.CommandNames.PlayerInfo, function (player) {
         currentPlayer = player;
         currentPlayer.sprite = tempLocalPlayer.sprite;
-
+        currentPlayer.weapon = tempLocalPlayer.weapon;
+        
         style.fill = currentPlayer.color;
         currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
         currentPlayer.nicknameText.anchor.set(0.5);
-
+        
         playerList[currentPlayer.id] = currentPlayer;
         console.log("this should be me and my nickname is " + currentPlayer.nickname + " and my id is " + currentPlayer.id);
     });
-
+    
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
         player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
         player.sprite.anchor.setTo(0.5, 0.5);
+        player.weapon = game.add.sprite(0, 0, 'paddle');
+        player.weapon.anchor.setTo(0.5, 0.5);
+
         style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
         playerList[player.id] = player;
         console.log("this should be new comer and its id is " + player.id + " nickname is " + player.nickname);
     });
-
+    
     socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
         console.log("this should be disconnected user info" + disconnectedPlayer.id);
         playerList[disconnectedPlayer.id].nicknameText.destroy();
         playerList[disconnectedPlayer.id].sprite.destroy();
-        delete playerList[disconnectedPlayer.id];        
+        playerList[disconnectedPlayer.id].weapon.destroy();
+        delete playerList[disconnectedPlayer.id];
     });
-
+    
     socket.on(Constants.CommandNames.PlayerPosRotUpdate, function (playersData) {
         for (var id in playersData) {
             var data = playersData[id];
             var player = playerList[id];
-
+            
+            if (player.weapon) {
+                player.weapon.position.x = data.weapon.x;
+                player.weapon.position.y = data.weapon.y;
+                player.weapon.rotation = data.weapon.rotation;
+            }
+            
             if (player.sprite) {
                 player.sprite.rotation = data.rotation;
-
+                                
                 if (player.sprite.position) {
                     //position update
                     player.sprite.position.x = data.x;
                     player.sprite.position.y = data.y;
-
+                   
                     //nickname text position update
                     player.position.x = player.sprite.position.x;
                     player.position.y = player.sprite.position.y;
-
+                    
                     if (player.nicknameText) {
                         player.nicknameText.x = Math.floor(player.position.x);
                         player.nicknameText.y = Math.floor(player.position.y - player.sprite.height * 0.75);
@@ -171,7 +201,7 @@ var createSocketEvents = function () {
             }
         }
     });
-
+    
     socket.on("tick", function (tick) {
         totalGameTimeInSeconds = tick;
     });
