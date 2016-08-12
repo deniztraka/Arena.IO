@@ -11,7 +11,8 @@ var player = function (socket) {
     this.nickname = socket.handshake.query["nickname"];
     this.client = { sessionId : socket.id };
     this.color = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
-    this.health = 100;   
+    this.health = 100;
+    this.nextAttackTime = 0;  
     p2.Body.call(this, {
         mass: 1,
         position: [Math.floor(300 * Math.random()), Math.floor(300 * Math.random())],

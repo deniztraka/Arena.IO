@@ -54,15 +54,16 @@ var getClientPlayerList = function () {
 };
 
 var slashRate = 0.25;
-var nextAttack = 0;
+
 function attack(player, mousePosition) {
-    if (totalElapsedTimeFromSeconds > nextAttack) {
-        nextAttack = totalElapsedTimeFromSeconds + slashRate;
+    if (totalElapsedTimeFromSeconds > player.nextAttackTime) {
+        player.nextAttackTime = totalElapsedTimeFromSeconds + slashRate;
         return true;
     } else {
         return false;
     }
 }
+
 function processSlash(player, mousePosition) {
     var maxSlashDistance = 30;
     
@@ -89,7 +90,7 @@ function processSlash(player, mousePosition) {
 };
 
 var onMouseClicked = function (player, mousePosition) {
-    var canSlash = attack();
+    var canSlash = attack(player);
     if (canSlash) {
         processSlash(player, mousePosition);
     }
