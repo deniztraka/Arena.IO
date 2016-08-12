@@ -140,10 +140,12 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
+        game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
         style = { font: "10px Arial", fill: "#999999", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
         //game.world.setBounds(0, 0, 1920, 1920);
+        tilesprite = game.add.tileSprite(0, 0, 300, 300, 'grass');
         game.physics.startSystem(Phaser.Physics.ARCADE);
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');

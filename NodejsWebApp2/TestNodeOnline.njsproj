@@ -45,12 +45,14 @@
     <Content Include="public\assets\particles\glass.png" />
     <Content Include="public\assets\sprites\paddle.png" />
     <Content Include="public\assets\sprites\red_ball.png" />
+    <Content Include="public\assets\sprites\tiles\grass1.png" />
     <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="public\assets\fonts\" />
     <Folder Include="public\assets\fonts\bitmap\" />
     <Folder Include="public\assets\particles\" />
+    <Folder Include="public\assets\sprites\tiles\" />
     <Folder Include="shared\" />
     <Folder Include="server\" />
     <Folder Include="public\" />
