@@ -60,8 +60,7 @@ var attackRate = 250;
 var nextAttack = 0;
 function attack() {
     if (game.time.now > nextAttack) {
-        nextAttack = game.time.now + attackRate;
-        console.log("aatsasd");
+        nextAttack = game.time.now + attackRate;        
         socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
     }
 }
@@ -96,7 +95,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
-        style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
+        style = { font: "10px Arial", fill: "#999999", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
         //game.world.setBounds(0, 0, 1920, 1920);
@@ -148,8 +147,8 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
 });
 
 
-var createSocketEvents = function () {
-    socket = io(window.location.origin, { query: 'nickname=' + Math.floor(1000 * Math.random()) });
+var createSocketEvents = function () {    
+    socket = io(window.location.origin, { query: 'nickname=' +$('#nicknameText').val() });
     socket.on(Constants.EventNames.Connect, function () {
 
     });
@@ -168,7 +167,7 @@ var createSocketEvents = function () {
             //style.fill = player.color;
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
-            console.log("this should be already logged in player" + player.id);
+            //console.log("this should be already logged in player" + player.id);
         };
     });
     
@@ -178,12 +177,12 @@ var createSocketEvents = function () {
         currentPlayer.weapon = tempLocalPlayer.weapon;
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         
-        //style.fill = currentPlayer.color;
-        currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
-        currentPlayer.nicknameText.anchor.set(0.5);
+        //style.fill = '#000000';//currentPlayer.color;
+        //currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
+        //currentPlayer.nicknameText.anchor.set(0.5);
         
         playerList[currentPlayer.id] = currentPlayer;
-        console.log("this should be me and my nickname is " + currentPlayer.nickname + " and my id is " + currentPlayer.id);
+        //console.log("this should be me and my nickname is " + currentPlayer.nickname + " and my id is " + currentPlayer.id);
     });
     
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
@@ -197,16 +196,16 @@ var createSocketEvents = function () {
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
         playerList[player.id] = player;
-        console.log("this should be new comer and its id is " + player.id + " nickname is " + player.nickname);
+        //console.log("this should be new comer and its id is " + player.id + " nickname is " + player.nickname);
     });
     
     socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
-        console.log("this should be disconnected user info" + disconnectedPlayer.id);
+        //console.log("this should be disconnected user info" + disconnectedPlayer.id);
         kill(disconnectedPlayer);       
     });
     
     socket.on(Constants.CommandNames.Killed, function (killedPlayer) {
-        console.log("player " + killedPlayer.id + " is killed.");
+        //console.log("player " + killedPlayer.id + " is killed.");
         kill(killedPlayer);
     });
     

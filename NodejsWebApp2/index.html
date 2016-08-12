@@ -8,13 +8,32 @@
     <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/2.5.0/phaser.min.js"></script>
-    
+
 </head>
 <body>
-    <!--<input type="text" name="nickname" id="nickname" />
-    <input type="button" name="enter" id="nickname" />-->
+    <input type="text" name="nickname" id="nicknameText" />
+    <input type="button" name="enter" id="nicknameButton" onclick="getGame()" value="enter" >
 
-    <script src="/shared/js/common/constants.js"></script>
-    <script src="/public/js/client.js"></script> 
+    <!--<script src="/shared/js/common/constants.js"></script>
+    <script src="/public/js/client.js"></script>-->
+    <script>
+        function getGame() {
+            $.ajax({
+                url: "/shared/js/common/constants.js",
+                dataType: "script",
+                success: function () {
+                    $.ajax({
+                        url: "/public/js/client.js",
+                        dataType: "script",
+                        success: function () {
+                            $('#nicknameText').hide();
+                            $('#nicknameButton').hide();
+                        }
+                    });
+                }
+            });
+        }
+
+    </script>
 </body>
 </html>
