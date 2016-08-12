@@ -175,10 +175,11 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //gameTimeText.updateText();        
     },
     render: function () {
-        game.debug.text("Fps:" + game.time.fps || '--', 2, 15, "#666666");
-        game.debug.text("Online:" + Object.size(playerList), 2, 30, "#666666");
         if (currentPlayer) {
-            game.debug.text("Health:" + playerList[currentPlayer.id].health || '--', 2, 45, "#999999");
+            game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");            
+            game.debug.text("Online: " + parseInt(Object.size(playerList)), 2, 30, "#666666");
+                        
+            game.debug.text(currentPlayer.nickname + " : " + playerList[currentPlayer.id].health || '--', 2, game.world.bounds.height - 5, currentPlayer.color);
         }
         //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
         //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
@@ -211,8 +212,6 @@ var createSocketEvents = function () {
     });
 
     socket.on(Constants.CommandNames.HealthUpdate, function (healthList) {
-        console.log("asdasd");
-
         for (var id in healthList) {
            
             playerList[id].health = healthList[id];
