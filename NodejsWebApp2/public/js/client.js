@@ -15,6 +15,10 @@ var style;
 var totalGameTimeInSeconds = 0;
 var gameTimeText;
 
+var manager = null;
+var emitter = null;
+var circle = null;
+
 var buildGameTimeText = function (totalGameTimeFromSeconds) {
     
     //Todo : Get time string hh:mm:ss
@@ -69,17 +73,36 @@ var checkActions = function (socket) {
     }, this);    
 };
 
+function particleBurst(pointer) {
+    
+    //  Position the emitter where the mouse/touch event was
+    emitter.x = pointer.x;
+    emitter.y = pointer.y;
+
+    emitter.setScale(0.1, 0.001, 0.1, 0.001, 750, Phaser.Easing.Quintic.Out);
+    
+    //  The first parameter sets the effect to "explode" which means all particles are emitted at once
+    //  The second gives each particle a 2000ms lifespan
+    //  The third is ignored when using burst/explode mode
+    //  The final parameter (10) is how many particles will be emitted in this single burst
+    emitter.start(true, 500, null, 5);
+
+}
+
 var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
-        style = { font: "10px Arial", fill: "#ff0044", wordWrap: true, wordWrapWidth: 80, align: "center" };
+        game.load.image('glassParticle', '/public/assets/particles/glass.png');
+        style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
         //game.world.setBounds(0, 0, 1920, 1920);
-        
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+        emitter = game.add.emitter(0, 0, 100);
+        emitter.makeParticles('glassParticle');
 
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
@@ -104,6 +127,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //gameTimeText.anchor.y = 0.5;
         //gameTimeText.scale = new Phaser.Point(0.5,0.5);      
         createSocketEvents();
+        game.input.onDown.add(particleBurst, this);
     },
     update: function () {
         //process player rotation
@@ -135,12 +159,13 @@ var createSocketEvents = function () {
         for (var id in playerList) {
             var player = playerList[id];
             player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-            player.sprite.anchor.setTo(0.5, 0.5);
+            player.sprite.anchor.setTo(0.5, 0.5);            
             
             player.weapon = game.add.sprite(0, 0, 'paddle');
             player.weapon.anchor.setTo(0.5, 0.5);
+            player.weapon.tint = "0x" + player.color.replace('#','');
 
-            style.fill = player.color;
+            //style.fill = player.color;
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
             console.log("this should be already logged in player" + player.id);
@@ -149,10 +174,11 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.PlayerInfo, function (player) {
         currentPlayer = player;
-        currentPlayer.sprite = tempLocalPlayer.sprite;
+        currentPlayer.sprite = tempLocalPlayer.sprite;        
         currentPlayer.weapon = tempLocalPlayer.weapon;
+        currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         
-        style.fill = currentPlayer.color;
+        //style.fill = currentPlayer.color;
         currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
         currentPlayer.nicknameText.anchor.set(0.5);
         
@@ -162,11 +188,12 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
         player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-        player.sprite.anchor.setTo(0.5, 0.5);
+        player.sprite.anchor.setTo(0.5, 0.5);        
         player.weapon = game.add.sprite(0, 0, 'paddle');
         player.weapon.anchor.setTo(0.5, 0.5);
+        player.weapon.tint = "0x" + player.color.replace('#', '');
 
-        style.fill = player.color;
+        //style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
         playerList[player.id] = player;
