@@ -38,14 +38,14 @@ io.on(Constants.EventNames.Connection, function (socket) {
 var onPlayerDisconnect = function (player, socket) {
     console.log('user is disconnected. id:' + player.id);
     socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
-    kill(player);    
+    kill(player);
 };
 
 var getClientPlayerList = function () {
     var clientList = {};
     for (var i = 0; i < world.bodies.length; i++) {
         var body = world.bodies[i];
-        if (body.isBodyAlive) { 
+        if (body.isBodyAlive) {
             var player = body;
             clientList[player.id] = player.clientInfo;
         }
@@ -55,11 +55,11 @@ var getClientPlayerList = function () {
 
 var slashRate = 0.25;
 var nextAttack = 0;
-function attack(player,mousePosition) {
+function attack(player, mousePosition) {
     if (totalElapsedTimeFromSeconds > nextAttack) {
         nextAttack = totalElapsedTimeFromSeconds + slashRate;
         return true;
-    } else { 
+    } else {
         return false;
     }
 }
@@ -88,34 +88,34 @@ function processSlash(player, mousePosition) {
     player.weapon.position[1] = player.weapon.position[1] + yDistance;
 };
 
-var onMouseClicked = function (player,mousePosition) {    
+var onMouseClicked = function (player, mousePosition) {
     var canSlash = attack();
     if (canSlash) {
-        processSlash(player, mousePosition);        
-    }    
+        processSlash(player, mousePosition);
+    }
 };
 
 var onUpKeyPressed = function (player) {
-    player.position[1]--;    
+    player.position[1]--;
 };
 
 var onDownKeyPressed = function (player) {
-    player.position[1]++;    
+    player.position[1]++;
 };
 
 var onLeftKeyPressed = function (player) {
-    player.position[0]--;    
+    player.position[0]--;
 };
 
 var onRightKeyPressed = function (player) {
-    player.position[0]++;    
+    player.position[0]++;
 };
 
 var onUpdateRotation = function (player, rotation) {
     player.angle = rotation;
 };
 
-var updateRotation = function (player, mousePosition) {    
+var updateRotation = function (player, mousePosition) {
     player.angle = Math.atan2(mousePosition.x - player.weapon.position[0], -(mousePosition.y - player.weapon.position[1]));
 };
 
@@ -124,11 +124,11 @@ var onPlayerConnect = function (socket, io) {
     socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
     
     var player = new Player(socket);
-    player.weapon = new Weapon(socket, player.position, player.id);     
-    world.addBody(player.weapon);   
-    world.addBody(player);           
-
-     //This will lock weapon to player
+    player.weapon = new Weapon(socket, player.position, player.id);
+    world.addBody(player.weapon);
+    world.addBody(player);
+    
+    //This will lock weapon to player
     player.weaponConstraint = new p2.LockConstraint(player, player.weapon, { collideConnected: false });
     world.addConstraint(player.weaponConstraint);
     
@@ -138,10 +138,10 @@ var onPlayerConnect = function (socket, io) {
     socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
         onPlayerDisconnect(player, socket);
     });
-
+    
     //send playerInfo to the sender
     socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
-
+    
     //send playerInfo to the all clients except sender
     socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
     
@@ -164,7 +164,7 @@ var onPlayerConnect = function (socket, io) {
         onRightKeyPressed(player);
     });
     socket.on(Constants.CommandNames.MousePosition, function (mousePos) {
-        updateRotation(player,mousePos);
+        updateRotation(player, mousePos);
     });
 };
 
@@ -197,6 +197,7 @@ var lastTimeSeconds;
 var totalElapsedTimeFromSeconds = 0;
 var serverProcessFrequency = 1 / 60;
 var gameTimeUpdateFrequencyFromSeconds = 1;
+var healthUpdateFrequencyFromSeconds = 1/10;
 var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
 
 var maxSubSteps = 10;
@@ -210,6 +211,7 @@ setInterval(function () {
     
     //Sending elapsed game time to all clients
     executeByIntervalFromSeconds(gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
+        
     lastTimeSeconds = totalElapsedTimeFromSeconds;
 }, 1000 * serverProcessFrequency);
 
@@ -223,21 +225,37 @@ var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
 var processWorld = function () {
     // The step method moves the bodies forward in time.
     world.step(serverProcessFrequency, deltaTime, maxSubSteps);
+    executeByIntervalFromSeconds(healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
     executeByIntervalFromSeconds(positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
+    
     //sendPosRotData();
 };
 
 world.on('beginContact', function (evt) {
-    if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive ) {
+    if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
         var attacker = world.getBodyById(evt.bodyB.playerId);
         evt.bodyA.health -= evt.bodyB.damage;
-        log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);
+        //evt.bodyA.socket.emit(Constants.CommandNames.DamageDealt, evt.bodyA.health);//send new health to attacked player
+        //io.emit(Constants.CommandNames.DamageGiven, evt.bodyA.id);//send attacked player info  to attacker player
+        //log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);
         if (evt.bodyA.health <= 0) {
             io.emit(Constants.CommandNames.Killed, evt.bodyA.clientInfo);//send playerInfo to the all clients
             kill(evt.bodyA);
         }
     }
 });
+
+var sendAllPlayersHealthInfo = function () {
+    var allHealthList = {};        
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];
+        if (body.isBodyAlive) {
+            var player = body;            
+            allHealthList[player.id] = player.health;
+        }
+    }        
+    io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
+};
 
 var sendGameTimeToAllClients = function () {
     io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));

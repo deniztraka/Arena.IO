@@ -17,10 +17,13 @@
         AlreadyLoggedInPlayerList : "alreadyLoggedInPlayerList",
         PlayerPosRotUpdate: "playerPosRotUpdate",
         MousePosition : "mousePosition",
-        Killed : "killed"
+        Killed : "killed",
+        DamageDealt : "damageDealt",
+        DamageGiven: "damageGiven",
+        HealthUpdate: "healthUpdate"
     }
 };
 
-if (typeof module !== 'undefined' ) {
+if (typeof module !== 'undefined') {
     module.exports = Constants;
 }

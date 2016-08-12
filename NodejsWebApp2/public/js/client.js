@@ -1,4 +1,12 @@
 ﻿
+Object.size = function (obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
 var playerList = {};
 var currentPlayer;
 var tempLocalPlayer = {};
@@ -30,7 +38,10 @@ var buildGameTimeText = function (totalGameTimeFromSeconds) {
 };
 
 function kill(player) {
-    playerList[player.id].nicknameText.destroy();
+    if (playerList[player.id].nicknameText) {
+        playerList[player.id].nicknameText.destroy();
+    }
+    
     playerList[player.id].sprite.destroy();
     playerList[player.id].weapon.destroy();
     delete playerList[player.id];
@@ -56,20 +67,45 @@ var checkMovement = function (socket) {
     }
 }
 
+function triggerAttackAnimation(position) {
+    //var maxSlashDistance = 20;
+    
+    //var xDistance = (position.x - currentPlayer.position.x);
+    //var yDistance = (position.y - currentPlayer.position.y);
+    
+    //if (xDistance > maxSlashDistance) {
+    //    xDistance = maxSlashDistance;
+    //} else if (xDistance < -maxSlashDistance) {
+    //    xDistance = -maxSlashDistance
+    //}
+    
+    //if (yDistance > maxSlashDistance) {
+    //    yDistance = maxSlashDistance;
+    //} else if (yDistance < -maxSlashDistance) {
+    //    yDistance = -maxSlashDistance
+    //}
+    
+    //var animPosX = currentPlayer.weapon.position.x + xDistance;
+    //var animPosY = currentPlayer.weapon.position.y + yDistance;
+    
+    particleBurst({ x: position.x, y: position.y });
+}
+
 var attackRate = 250;
 var nextAttack = 0;
 function attack() {
     if (game.time.now > nextAttack) {
-        nextAttack = game.time.now + attackRate;        
+        nextAttack = game.time.now + attackRate;
         socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
+        //triggerAttackAnimation({ x: game.input.mousePointer.x, y: game.input.mousePointer.y });
     }
 }
 
 var checkActions = function (socket) {
     game.input.activePointer.leftButton.onDown.add(function () {
-        attack(socket); 
+        attack(socket);
         
-    }, this);    
+    }, this);
 };
 
 function particleBurst(pointer) {
@@ -77,8 +113,8 @@ function particleBurst(pointer) {
     //  Position the emitter where the mouse/touch event was
     emitter.x = pointer.x;
     emitter.y = pointer.y;
-
-    emitter.setScale(0.1, 0.001, 0.1, 0.001, 750, Phaser.Easing.Quintic.Out);
+    
+    emitter.setScale(0.25, 0.001, 0.25, 0.001, 750, Phaser.Easing.Quintic.Out);
     
     //  The first parameter sets the effect to "explode" which means all particles are emitted at once
     //  The second gives each particle a 2000ms lifespan
@@ -102,7 +138,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         game.physics.startSystem(Phaser.Physics.ARCADE);
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');
-
+        
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
         
@@ -126,7 +162,6 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //gameTimeText.anchor.y = 0.5;
         //gameTimeText.scale = new Phaser.Point(0.5,0.5);      
         createSocketEvents();
-        game.input.onDown.add(particleBurst, this);
     },
     update: function () {
         //process player rotation
@@ -140,15 +175,19 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //gameTimeText.updateText();        
     },
     render: function () {
-        game.debug.text(game.time.fps || '--', 2, 14, "#00ff00");
+        game.debug.text("Fps:" + game.time.fps || '--', 2, 15, "#666666");
+        game.debug.text("Online:" + Object.size(playerList), 2, 30, "#666666");
+        if (currentPlayer) {
+            game.debug.text("Health:" + playerList[currentPlayer.id].health || '--', 2, 45, "#999999");
+        }
         //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
         //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
     }
 });
 
 
-var createSocketEvents = function () {    
-    socket = io(window.location.origin, { query: 'nickname=' +$('#nicknameText').val() });
+var createSocketEvents = function () {
+    socket = io(window.location.origin, { query: 'nickname=' + $('#nicknameText').val() });
     socket.on(Constants.EventNames.Connect, function () {
 
     });
@@ -158,22 +197,31 @@ var createSocketEvents = function () {
         for (var id in playerList) {
             var player = playerList[id];
             player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-            player.sprite.anchor.setTo(0.5, 0.5);            
+            player.sprite.anchor.setTo(0.5, 0.5);
             
             player.weapon = game.add.sprite(0, 0, 'paddle');
             player.weapon.anchor.setTo(0.5, 0.5);
-            player.weapon.tint = "0x" + player.color.replace('#','');
-
+            player.weapon.tint = "0x" + player.color.replace('#', '');
+            
             //style.fill = player.color;
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
             //console.log("this should be already logged in player" + player.id);
         };
     });
+
+    socket.on(Constants.CommandNames.HealthUpdate, function (healthList) {
+        console.log("asdasd");
+
+        for (var id in healthList) {
+           
+            playerList[id].health = healthList[id];
+        }
+    });
     
     socket.on(Constants.CommandNames.PlayerInfo, function (player) {
         currentPlayer = player;
-        currentPlayer.sprite = tempLocalPlayer.sprite;        
+        currentPlayer.sprite = tempLocalPlayer.sprite;
         currentPlayer.weapon = tempLocalPlayer.weapon;
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         
@@ -187,11 +235,11 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
         player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
-        player.sprite.anchor.setTo(0.5, 0.5);        
+        player.sprite.anchor.setTo(0.5, 0.5);
         player.weapon = game.add.sprite(0, 0, 'paddle');
         player.weapon.anchor.setTo(0.5, 0.5);
         player.weapon.tint = "0x" + player.color.replace('#', '');
-
+        
         //style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
@@ -201,16 +249,14 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.DisconnectedPlayerInfo, function (disconnectedPlayer) {
         //console.log("this should be disconnected user info" + disconnectedPlayer.id);
-        kill(disconnectedPlayer);       
+        kill(disconnectedPlayer);
     });
     
     socket.on(Constants.CommandNames.Killed, function (killedPlayer) {
         //console.log("player " + killedPlayer.id + " is killed.");
         kill(killedPlayer);
     });
-    
 
-    
     socket.on(Constants.CommandNames.PlayerPosRotUpdate, function (playersData) {
         for (var id in playersData) {
             var data = playersData[id];
@@ -224,12 +270,12 @@ var createSocketEvents = function () {
             
             if (player.sprite) {
                 player.sprite.rotation = data.rotation;
-                                
+                
                 if (player.sprite.position) {
                     //position update
                     player.sprite.position.x = data.x;
                     player.sprite.position.y = data.y;
-                   
+                    
                     //nickname text position update
                     player.position.x = player.sprite.position.x;
                     player.position.y = player.sprite.position.y;

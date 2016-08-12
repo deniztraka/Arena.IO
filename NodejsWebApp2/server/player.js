@@ -33,6 +33,7 @@ var player = function (socket) {
             y: this.interpolatedPosition[1]
         },
         color: this.color,
+        health:this.health,
         nickname: this.nickname,
         weapon : getWeaponInfo()
     };
