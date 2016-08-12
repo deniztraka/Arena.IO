@@ -235,6 +235,7 @@ world.on('beginContact', function (evt) {
     if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
         var attacker = world.getBodyById(evt.bodyB.playerId);
         evt.bodyA.health -= evt.bodyB.damage;
+        io.emit("animAttack", { x: evt.bodyA.position[0], y: evt.bodyA.position[1] });
         //evt.bodyA.socket.emit(Constants.CommandNames.DamageDealt, evt.bodyA.health);//send new health to attacked player
         //io.emit(Constants.CommandNames.DamageGiven, evt.bodyA.id);//send attacked player info  to attacker player
         //log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);

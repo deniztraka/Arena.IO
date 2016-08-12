@@ -68,27 +68,37 @@ var checkMovement = function (socket) {
 }
 
 function triggerAttackAnimation(position) {
-    //var maxSlashDistance = 20;
+    var maxSlashDistance = 20;
     
-    //var xDistance = (position.x - currentPlayer.position.x);
-    //var yDistance = (position.y - currentPlayer.position.y);
+    var xDistance = (position.x - currentPlayer.position.x);
+    var yDistance = (position.y - currentPlayer.position.y);
     
-    //if (xDistance > maxSlashDistance) {
-    //    xDistance = maxSlashDistance;
-    //} else if (xDistance < -maxSlashDistance) {
-    //    xDistance = -maxSlashDistance
-    //}
+    if (xDistance > maxSlashDistance) {
+        xDistance = maxSlashDistance;
+    } else if (xDistance < -maxSlashDistance) {
+        xDistance = -maxSlashDistance
+    }
     
-    //if (yDistance > maxSlashDistance) {
-    //    yDistance = maxSlashDistance;
-    //} else if (yDistance < -maxSlashDistance) {
-    //    yDistance = -maxSlashDistance
-    //}
+    if (yDistance > maxSlashDistance) {
+        yDistance = maxSlashDistance;
+    } else if (yDistance < -maxSlashDistance) {
+        yDistance = -maxSlashDistance
+    }
     
-    //var animPosX = currentPlayer.weapon.position.x + xDistance;
-    //var animPosY = currentPlayer.weapon.position.y + yDistance;
+    var animPosX = currentPlayer.weapon.position.x + xDistance;
+    var animPosY = currentPlayer.weapon.position.y + yDistance;
     
-    particleBurst({ x: position.x, y: position.y });
+    var radius = 20;
+    var thereIsPlayer = false;
+    for (var id in playerList) {
+        var player = playerList[id];
+        debugger;
+        if (player.position.x + radius/2 > animPosX && player.position.x - radius/2 < animPosX) { 
+            if (player.position.y + radius/2 > animPosY && player.position.y - radius/2 < animPosY) { 
+                particleBurst({ x: player.position.x, y: player.position.y });
+            }
+        }
+    }; 
 }
 
 var attackRate = 250;
@@ -96,8 +106,7 @@ var nextAttack = 0;
 function attack() {
     if (game.time.now > nextAttack) {
         nextAttack = game.time.now + attackRate;
-        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
-        //triggerAttackAnimation({ x: game.input.mousePointer.x, y: game.input.mousePointer.y });
+        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });        
     }
 }
 
@@ -286,6 +295,10 @@ var createSocketEvents = function () {
                 }
             }
         }
+    });
+    
+    socket.on("animAttack", function (animPos) {
+        particleBurst(animPos);
     });
     
     socket.on("tick", function (tick) {
