@@ -26,7 +26,7 @@ app.get('/', function (req, res) {
 });
 app.use('/public', express.static(__dirname + '/public'));
 app.use('/shared', express.static(__dirname + '/shared'));
-serv.listen(process.env.port || 1337, function (s) {
+serv.listen(process.env.port || 5009, function (s) {
 
 });
 
