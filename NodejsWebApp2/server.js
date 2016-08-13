@@ -65,28 +65,36 @@ function attack(player, mousePosition) {
 }
 
 function processSlash(player, mousePosition) {
-    var maxSlashDistance = 30;
+    //var maxSlashDistance = 30;
     
-    var xDistance = (mousePosition.x - player.position[0]);
-    var yDistance = (mousePosition.y - player.position[1]);
-    //var d = Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
-    /*var slashPower = d * 0.3;
-      	console.log(d);*/
+    //var xDistance = (mousePosition.x - player.position[0]);
+    //var yDistance = (mousePosition.y - player.position[1]);
+    ////var d = Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+    ///*var slashPower = d * 0.3;
+    //  	console.log(d);*/
+    
+    //  	if (xDistance > maxSlashDistance) {
+    //    xDistance = maxSlashDistance;
+    //} else if (xDistance < -maxSlashDistance) {
+    //    xDistance = -maxSlashDistance
+    //}
+    
+    //if (yDistance > maxSlashDistance) {
+    //    yDistance = maxSlashDistance;
+    //} else if (yDistance < -maxSlashDistance) {
+    //    yDistance = -maxSlashDistance
+    //}
+    
+    //player.weapon.position[0] = player.weapon.position[0] + xDistance;
+    //player.weapon.position[1] = player.weapon.position[1] + yDistance;
+    
+    world.removeConstraint(player.weaponConstraint);
+    player.weapon.applyForceLocal([player.weapon.mass * 20000, 0]);
+    executeAfterSeconds(0.1, function () {
+        world.addConstraint(player.weaponConstraint)
+    });
 
-      	if (xDistance > maxSlashDistance) {
-        xDistance = maxSlashDistance;
-    } else if (xDistance < -maxSlashDistance) {
-        xDistance = -maxSlashDistance
-    }
     
-    if (yDistance > maxSlashDistance) {
-        yDistance = maxSlashDistance;
-    } else if (yDistance < -maxSlashDistance) {
-        yDistance = -maxSlashDistance
-    }
-    
-    player.weapon.position[0] = player.weapon.position[0] + xDistance;
-    player.weapon.position[1] = player.weapon.position[1] + yDistance;
 };
 
 var onMouseClicked = function (player, mousePosition) {
@@ -198,7 +206,7 @@ var lastTimeSeconds;
 var totalElapsedTimeFromSeconds = 0;
 var serverProcessFrequency = 1 / 60;
 var gameTimeUpdateFrequencyFromSeconds = 1;
-var healthUpdateFrequencyFromSeconds = 1/10;
+var healthUpdateFrequencyFromSeconds = 1 / 10;
 var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
 
 var maxSubSteps = 10;
@@ -212,9 +220,13 @@ setInterval(function () {
     
     //Sending elapsed game time to all clients
     executeByIntervalFromSeconds(gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
-        
+    
     lastTimeSeconds = totalElapsedTimeFromSeconds;
 }, 1000 * serverProcessFrequency);
+
+var executeAfterSeconds = function (seconds, executeFunction) {
+    setTimeout(function () { executeFunction() }, seconds * 1000);
+}
 
 var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
     var mod = totalElapsedTimeFromSeconds % frequency;
@@ -233,29 +245,57 @@ var processWorld = function () {
 };
 
 world.on('beginContact', function (evt) {
-    if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
-        var attacker = world.getBodyById(evt.bodyB.playerId);
-        evt.bodyA.health -= evt.bodyB.damage;
-        io.emit("animAttack", { x: evt.bodyA.position[0], y: evt.bodyA.position[1] });
+    var humanBody = null;
+    var weaponBody = null;
+    if (evt.bodyA.bodyType == "weapon" && evt.bodyB.bodyType == "weapon") {
+        return;
+    }
+    
+    //Todo:yururken weapona çarparsa hata verıyor şu an onu da handle etmek lazım
+    
+
+    if (evt.bodyA.bodyType == "weapon") {
+        if (evt.bodyA.playerId == evt.bodyB.id) {
+            return;
+        } else {
+            weaponBody = evt.bodyA;
+            humanBody = evt.bodyB;
+        }
+    } else if (evt.bodyB.bodyType == "weapon") {
+        if (evt.bodyB.playerId == evt.bodyA.id) {
+            return;
+        } else { 
+            weaponBody = evt.bodyB;
+            humanBody = evt.bodyA;
+        }
+    }
+    
+    //if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
+        var attacker = world.getBodyById(weaponBody.playerId);
+        
+        humanBody.health -= weaponBody.damage;
+        io.emit("animAttack", { x: humanBody.position[0], y: humanBody.position[1] });
         //evt.bodyA.socket.emit(Constants.CommandNames.DamageDealt, evt.bodyA.health);//send new health to attacked player
         //io.emit(Constants.CommandNames.DamageGiven, evt.bodyA.id);//send attacked player info  to attacker player
         //log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);
-        if (evt.bodyA.health <= 0) {
-            io.emit(Constants.CommandNames.Killed, evt.bodyA.clientInfo);//send playerInfo to the all clients
-            kill(evt.bodyA);
+        if (humanBody.health <= 0) {
+            io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
+            kill(humanBody);
         }
-    }
+        
+    //}
+    
 });
 
 var sendAllPlayersHealthInfo = function () {
-    var allHealthList = {};        
+    var allHealthList = {};
     for (var i = 0; i < world.bodies.length; i++) {
         var body = world.bodies[i];
         if (body.isBodyAlive) {
-            var player = body;            
+            var player = body;
             allHealthList[player.id] = player.health;
         }
-    }        
+    }
     io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
 };
 

@@ -6,11 +6,12 @@ var weapon = function (socket, playerPosition, playerId) {
     this.playerId = playerId;
     this.damage = 5;    
     p2.Body.call(this, {
-        mass : 0.00000001,
-        position : [playerPosition[0] + 10, playerPosition[1]-5],
+        mass : 0.0001,
+        position : [playerPosition[0] + 12, playerPosition[1]-5],
         angle : -1.5707963268  
     });    
     this.isBodyAlive = false;
+    this.bodyType = "weapon";
     
     var armShape = new p2.Box({
         width : armLength,
