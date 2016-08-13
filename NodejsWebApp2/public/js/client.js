@@ -133,7 +133,7 @@ function particleBurst(pointer) {
 
 }
 
-var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
+var game = new Phaser.Game(600, 600, Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
@@ -145,7 +145,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
     },
     create: function () {
         //game.world.setBounds(0, 0, 1920, 1920);
-        tilesprite = game.add.tileSprite(0, 0, 300, 300, 'grass');
+        tilesprite = game.add.tileSprite(0, 0, 600, 600, 'grass');
         game.physics.startSystem(Phaser.Physics.ARCADE);
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');
