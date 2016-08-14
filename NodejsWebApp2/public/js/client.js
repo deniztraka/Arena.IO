@@ -47,25 +47,26 @@ function kill(player) {
     playerList[player.id].sprite.destroy();
     
     delete playerList[player.id];
+    
 }
 
 var checkMovement = function (socket) {
     if (upKey.isDown || wKey.isDown) {
         socket.emit(Constants.EventNames.OnUpKeyPressed, true);
-        currentPlayer.sprite.position.y--;
+        //currentPlayer.sprite.position.y--;
     }
     else if (downKey.isDown || sKey.isDown) {
         socket.emit(Constants.EventNames.OnDownKeyPressed, true);
-        currentPlayer.sprite.position.y++;
+        //currentPlayer.sprite.position.y++;
     }
     
     if (leftKey.isDown || aKey.isDown) {
         socket.emit(Constants.EventNames.OnLeftKeyPressed, true);
-        currentPlayer.sprite.position.x--;
+        //currentPlayer.sprite.position.x--;
     }
     else if (rightKey.isDown || dKey.isDown) {
         socket.emit(Constants.EventNames.OnRightKeyPressed, true);
-        currentPlayer.sprite.position.x++;
+        //currentPlayer.sprite.position.x++;
     }
 }
 

@@ -13,11 +13,7 @@ function log(message) {
 }
 
 function kill(playerBody) {
-    world.removeConstraint(playerBody.weaponConstraint);
-    world.removeConstraint(playerBody.shieldConstraint);
-    world.removeBody(playerBody.weapon);
-    world.removeBody(playerBody.shield);
-    world.removeBody(playerBody);
+    bodyRemovalList.push(playerBody);
 }
 
 var world = new p2.World({
@@ -247,14 +243,31 @@ var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
     }
 }
 
+var bodyRemovalList=[];
 var processWorld = function () {
     // The step method moves the bodies forward in time.
     world.step(serverProcessFrequency, deltaTime, maxSubSteps);
+    clearRemovedBodies();
     executeByIntervalFromSeconds(healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
     executeByIntervalFromSeconds(positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
     
     //sendPosRotData();
 };
+
+function clearRemovedBodies() {
+    if (bodyRemovalList.length > 0) {
+        for (var i = 0; i < bodyRemovalList.length; i++) {
+            var body = bodyRemovalList[i];
+            world.removeConstraint(body.weaponConstraint);
+            world.removeConstraint(body.shieldConstraint);
+            world.removeBody(body.weapon);
+            world.removeBody(body.shield);
+            world.removeBody(body);
+            body.socket.disconnect();
+        }
+        bodyRemovalList = [];
+    }
+}
 
 world.on('beginContact', function (evt) {
     var humanBody = null;
