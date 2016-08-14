@@ -35,7 +35,7 @@ io.on(Constants.EventNames.Connection, function (socket) {
 });
 
 var onPlayerDisconnect = function (player, socket) {
-    console.log('user is disconnected. id:' + player.id);
+    log('user is disconnected. nickname:' + player.nickname);
     socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
     kill(player);
 };
@@ -144,7 +144,7 @@ var onPlayerConnect = function (socket, io) {
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
     world.addConstraint(player.shieldConstraint);
 
-    console.log('a user is connected. id:' + player.id);
+    log('a user is connected. nickname:' + player.nickname);
     
     //Player disconnected event
     socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
