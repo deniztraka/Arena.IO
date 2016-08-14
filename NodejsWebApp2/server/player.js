@@ -6,6 +6,12 @@ var player = function (socket) {
         }
     }
     
+    function getShieldInfo() {
+        if (this.shield) {
+            return this.shield.clientInfo;
+        }
+    }
+    
     this.socket = socket;
     this.id = Math.floor(100 * Math.random());
     this.nickname = socket.handshake.query["nickname"];
@@ -37,7 +43,8 @@ var player = function (socket) {
         color: this.color,
         health:this.health,
         nickname: this.nickname,
-        weapon : getWeaponInfo()
+        weapon : getWeaponInfo(),
+        shield : getShieldInfo()
     };
 };
 

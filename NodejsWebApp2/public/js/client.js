@@ -42,8 +42,10 @@ function kill(player) {
         playerList[player.id].nicknameText.destroy();
     }
     
-    playerList[player.id].sprite.destroy();
     playerList[player.id].weapon.destroy();
+    playerList[player.id].shield.destroy();
+    playerList[player.id].sprite.destroy();
+    
     delete playerList[player.id];
 }
 
@@ -92,7 +94,7 @@ function triggerAttackAnimation(position) {
     var thereIsPlayer = false;
     for (var id in playerList) {
         var player = playerList[id];
-        debugger;
+        //debugger;
         if (player.position.x + radius/2 > animPosX && player.position.x - radius/2 < animPosX) { 
             if (player.position.y + radius/2 > animPosY && player.position.y - radius/2 < animPosY) { 
                 particleBurst({ x: player.position.x, y: player.position.y });
@@ -139,6 +141,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
+        game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
@@ -157,6 +160,8 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         
         tempLocalPlayer.weapon = game.add.sprite(0, 0, 'paddle');
         tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
+        tempLocalPlayer.shield = game.add.sprite(0, 0, 'shield');
+        tempLocalPlayer.shield.anchor.setTo(0.5, 0.5);
         
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
@@ -190,7 +195,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
             game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");            
             game.debug.text("Online: " + parseInt(Object.size(playerList)), 2, 30, "#666666");
                         
-            game.debug.text(currentPlayer.nickname + " : " + playerList[currentPlayer.id].health || '--', 2, game.world.bounds.height - 5, currentPlayer.color);
+            game.debug.text(currentPlayer.nickname + " : " + currentPlayer.health || '--', 2, game.world.bounds.height - 5, currentPlayer.color);
         }
         //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
         //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
@@ -215,6 +220,10 @@ var createSocketEvents = function () {
             player.weapon.anchor.setTo(0.5, 0.5);
             player.weapon.tint = "0x" + player.color.replace('#', '');
             
+            player.shield = game.add.sprite(0, 0, 'shield');
+            player.shield.anchor.setTo(0.5, 0.5);
+            player.shield.tint = "0x" + player.color.replace('#', '');
+            
             //style.fill = player.color;
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
@@ -233,7 +242,9 @@ var createSocketEvents = function () {
         currentPlayer = player;
         currentPlayer.sprite = tempLocalPlayer.sprite;
         currentPlayer.weapon = tempLocalPlayer.weapon;
+        currentPlayer.shield = tempLocalPlayer.shield;
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
+        currentPlayer.shield.tint = "0x" + player.color.replace('#', '');
         
         //style.fill = '#000000';//currentPlayer.color;
         //currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
@@ -249,6 +260,10 @@ var createSocketEvents = function () {
         player.weapon = game.add.sprite(0, 0, 'paddle');
         player.weapon.anchor.setTo(0.5, 0.5);
         player.weapon.tint = "0x" + player.color.replace('#', '');
+        
+        player.shield= game.add.sprite(0, 0, 'shield');
+        player.shield.anchor.setTo(0.5, 0.5);
+        player.shield.tint = "0x" + player.color.replace('#', '');
         
         //style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
@@ -276,6 +291,12 @@ var createSocketEvents = function () {
                 player.weapon.position.x = data.weapon.x;
                 player.weapon.position.y = data.weapon.y;
                 player.weapon.rotation = data.weapon.rotation;
+            }
+            
+            if (player.shield) {
+                player.shield.position.x = data.shield.x;
+                player.shield.position.y = data.shield.y;
+                player.shield.rotation = data.shield.rotation;
             }
             
             if (player.sprite) {

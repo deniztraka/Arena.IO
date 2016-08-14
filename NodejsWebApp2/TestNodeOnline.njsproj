@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="public\js\client.js" />
     <Compile Include="server.js" />
+    <Compile Include="server\shield.js" />
     <Compile Include="server\weapon.js" />
     <Compile Include="shared\js\common\constants.js" />
     <Compile Include="server\player.js" />
@@ -45,6 +46,7 @@
     <Content Include="public\assets\particles\glass.png" />
     <Content Include="public\assets\sprites\paddle.png" />
     <Content Include="public\assets\sprites\red_ball.png" />
+    <Content Include="public\assets\sprites\shield.png" />
     <Content Include="public\assets\sprites\tiles\grass1.png" />
     <Content Include="README.md" />
   </ItemGroup>

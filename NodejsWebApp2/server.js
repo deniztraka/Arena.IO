@@ -6,6 +6,7 @@ var io = require('socket.io')(serv, {});
 var p2 = require('p2');
 var Player = require('./server/player.js');
 var Weapon = require('./server/weapon.js');
+var Shield = require('./server/shield.js');
 
 function log(message) {
     console.log(getDateTime() + " || " + message);
@@ -13,7 +14,9 @@ function log(message) {
 
 function kill(playerBody) {
     world.removeConstraint(playerBody.weaponConstraint);
+    world.removeConstraint(playerBody.shieldConstraint);
     world.removeBody(playerBody.weapon);
+    world.removeBody(playerBody.shield);
     world.removeBody(playerBody);
 }
 
@@ -134,13 +137,17 @@ var onPlayerConnect = function (socket, io) {
     
     var player = new Player(socket);
     player.weapon = new Weapon(socket, player.position, player.id);
+    player.shield = new Shield(socket, player.position, player.id);
     world.addBody(player.weapon);
+    world.addBody(player.shield);
     world.addBody(player);
     
-    //This will lock weapon to player
+    //This will lock weapon and shield to player
     player.weaponConstraint = new p2.LockConstraint(player, player.weapon, { collideConnected: false });
     world.addConstraint(player.weaponConstraint);
-    
+    player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
+    world.addConstraint(player.shieldConstraint);
+
     console.log('a user is connected. id:' + player.id);
     
     //Player disconnected event
@@ -194,6 +201,11 @@ var sendPosRotData = function () {
                     x: player.weapon.interpolatedPosition[0],
                     y: player.weapon.interpolatedPosition[1],
                     rotation: player.weapon.interpolatedAngle
+                },
+                shield: {
+                    x: player.shield.interpolatedPosition[0],
+                    y: player.shield.interpolatedPosition[1],
+                    rotation: player.shield.interpolatedAngle
                 }
             };
         }
@@ -247,7 +259,7 @@ var processWorld = function () {
 world.on('beginContact', function (evt) {
     var humanBody = null;
     var weaponBody = null;
-    if (evt.bodyA.bodyType == "weapon" && evt.bodyB.bodyType == "weapon") {
+    if (evt.bodyA.bodyType == evt.bodyB.bodyType || (evt.bodyA.bodyType == "shield" || evt.bodyB.bodyType == "shield")) {
         return;
     }
     
