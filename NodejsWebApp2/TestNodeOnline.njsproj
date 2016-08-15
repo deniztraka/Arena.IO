@@ -49,7 +49,13 @@
     <Content Include="public\assets\particles\glass.png" />
     <Content Include="public\assets\sprites\paddle.png" />
     <Content Include="public\assets\sprites\red_ball.png" />
+    <Content Include="public\assets\sprites\red_ballColored.png" />
     <Content Include="public\assets\sprites\shield.png" />
+    <Content Include="public\assets\sprites\tiles\dirt1.png" />
+    <Content Include="public\assets\sprites\tiles\dirt2.jpg" />
+    <Content Include="public\assets\sprites\tiles\dirt3.jpg" />
+    <Content Include="public\assets\sprites\tiles\dirt4.jpg" />
+    <Content Include="public\assets\sprites\tiles\dirt5.png" />
     <Content Include="public\assets\sprites\tiles\grass1.png" />
     <Content Include="README.md" />
   </ItemGroup>
