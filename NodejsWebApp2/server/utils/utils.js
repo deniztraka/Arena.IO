@@ -1,4 +1,5 @@
-﻿module.exports = {
+﻿var serverConfig = require('../core/serverConfig.js');
+module.exports = {
     getDateTimeText: function () {
         var date = new Date();
         
@@ -20,5 +21,14 @@
         day = (day < 10 ? "0" : "") + day;
         
         return year + "." + month + "." + day + " " + hour + ":" + min + ":" + sec;
+    },    
+    executeAfterSeconds : function (seconds, executeFunction) {
+        setTimeout(function () { executeFunction() }, seconds * 1000);
+    },    
+    executeByIntervalFromSeconds : function (totalElapsedTimeFromSeconds, frequency, functionToProcess) {
+        var mod = totalElapsedTimeFromSeconds % frequency;
+        if (mod < serverConfig.server.serverProcessFrequency) {
+            functionToProcess();
+        }
     }
 };

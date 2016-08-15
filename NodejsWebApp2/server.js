@@ -15,16 +15,10 @@ var Shield = require('./server/shield.js');
 // Server props
 var lastTimeSeconds;
 var totalElapsedTimeFromSeconds = 0;
-
-// Data sync update frequency constants
-var gameTimeUpdateFrequencyFromSeconds = 1;
-var healthUpdateFrequencyFromSeconds = 1 / 10;
-var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
-var damageDealtUpdateFrequencyFromSeconds = 1;
+var bodyRemovalList = [];
 
 // gameplay props
 var damageDealtData = {};
-var bodyRemovalList = [];
 
 // creating world
 var world = new p2.World({
@@ -44,31 +38,6 @@ serv.listen(process.env.port || 5009, function (s) {
 io.on(Constants.EventNames.Connection, function (socket) {
     onPlayerConnect(socket, io);
 });
-
-// player connect event
-var onPlayerConnect = function (socket, io) {
-    //firstly send already logged in playerList to the sender
-    socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
-    
-    //player is created
-    var player = createPlayer(socket);
-    logger.log(player.nickname + " is joined the server.");
-    
-    //send playerInfo to the sender
-    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
-    
-    //send playerInfo to the all clients except sender
-    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
-    
-    attachEvents(socket, player);
-};
-
-// player disconnect event
-var onPlayerDisconnect = function (player, socket) {
-    logger.log(player.nickname + " is disconnected from server.");
-    socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
-    kill(player);
-};
 
 // attaching events
 function attachEvents(socket, player) {
@@ -99,6 +68,31 @@ function attachEvents(socket, player) {
         updateRotation(player, mousePos);
     });
 }
+
+// player connect event
+var onPlayerConnect = function (socket, io) {
+    //firstly send already logged in playerList to the sender
+    socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
+    
+    //player is created
+    var player = createPlayer(socket);
+    logger.log(player.nickname + " is joined the server.");
+    
+    //send playerInfo to the sender
+    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
+    
+    //send playerInfo to the all clients except sender
+    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
+    
+    attachEvents(socket, player);
+};
+
+// player disconnect event
+var onPlayerDisconnect = function (player, socket) {
+    logger.log(player.nickname + " is disconnected from server.");
+    socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
+    kill(player);
+};
 
 // handling user inputs
 var onMouseClicked = function (player, mousePosition) {
@@ -136,7 +130,7 @@ setInterval(function () {
     processWorld(deltaTime);
     
     //Sending elapsed game time to all clients
-    executeByIntervalFromSeconds(serverConfig.server.gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
     
     lastTimeSeconds = totalElapsedTimeFromSeconds;
 }, 1000 * serverConfig.server.serverProcessFrequency);
@@ -165,7 +159,7 @@ world.on('beginContact', function (evt) {
         }
     }
     
-    var attacker = world.getBodyById(weaponBody.playerId);          
+    var attacker = world.getBodyById(weaponBody.playerId);
     humanBody.health -= weaponBody.damage;
     damageDealtData[weaponBody.playerId] += weaponBody.damage;  //update player total damage dealt
     
@@ -173,16 +167,16 @@ world.on('beginContact', function (evt) {
     if (humanBody.health <= 0) {
         io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
         kill(humanBody);
-    }    
+    }
 });
 
 // core game functions
 var processWorld = function (deltaTime) {
     world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
     clearRemovedBodies();
-    executeByIntervalFromSeconds(serverConfig.server.healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
-    executeByIntervalFromSeconds(serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
-    //executeByIntervalFromSeconds(damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
+    //utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
 };
 
 function clearRemovedBodies() {
@@ -228,7 +222,7 @@ function attack(player, mousePosition) {
 function processSlash(player, mousePosition) {
     world.removeConstraint(player.weaponConstraint);
     player.weapon.applyForceLocal([player.weapon.mass * 20000, 0]);
-    executeAfterSeconds(0.1, function () {
+    utils.executeAfterSeconds(0.1, function () {
         world.addConstraint(player.weaponConstraint)
     });
 };
@@ -307,22 +301,10 @@ var sendAllPlayersHealthInfo = function () {
     io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
 };
 
-var sendAllPlayersDamageDealthInfo = function () {    
+var sendAllPlayersDamageDealthInfo = function () {
     io.emit(Constants.CommandNames.DamageDealtUpdate, damageDealtData);
 };
 
 var sendGameTimeToAllClients = function () {
     io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));
-};
-
-// core util functions
-var executeAfterSeconds = function (seconds, executeFunction) {
-    setTimeout(function () { executeFunction() }, seconds * 1000);
-};
-
-var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
-    var mod = totalElapsedTimeFromSeconds % frequency;
-    if (mod < serverConfig.server.serverProcessFrequency) {
-        functionToProcess();
-    }
 };
