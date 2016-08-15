@@ -22,6 +22,7 @@ var socket;
 var style;
 var totalGameTimeInSeconds = 0;
 var gameTimeText;
+var damageDealtData;
 
 var manager = null;
 var emitter = null;
@@ -96,20 +97,20 @@ function triggerAttackAnimation(position) {
     for (var id in playerList) {
         var player = playerList[id];
         //debugger;
-        if (player.position.x + radius/2 > animPosX && player.position.x - radius/2 < animPosX) { 
-            if (player.position.y + radius/2 > animPosY && player.position.y - radius/2 < animPosY) { 
+        if (player.position.x + radius / 2 > animPosX && player.position.x - radius / 2 < animPosX) {
+            if (player.position.y + radius / 2 > animPosY && player.position.y - radius / 2 < animPosY) {
                 particleBurst({ x: player.position.x, y: player.position.y });
             }
         }
-    }; 
+    };
 }
 
-var attackRate = 250;
+var attackRate = 500;
 var nextAttack = 0;
 function attack() {
     if (game.time.now > nextAttack) {
         nextAttack = game.time.now + attackRate;
-        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });        
+        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
     }
 }
 
@@ -192,17 +193,41 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         //gameTimeText.updateText();        
     },
     render: function () {
+        var onlineCount = parseInt(Object.size(playerList));
         if (currentPlayer) {
-            game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");            
-            game.debug.text("Online: " + parseInt(Object.size(playerList)), 2, 30, "#666666");
-                        
+            game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");
+            game.debug.text("Online: " + onlineCount, 2, 30, "#666666");
+            
             game.debug.text(currentPlayer.nickname + " : " + currentPlayer.health || '--', 2, game.world.bounds.height - 5, currentPlayer.color);
         }
-        //game.debug.pixel(gameTimeText.position.x, gameTimeText.position.y, 'rgba(0,255,255,1)');
-        //game.debug.text(totalGameTimeInSeconds || '--', 20, 40, "#00ff00");               
+        
+        //if (damageDealtData) {
+        //    var yValue = 50;
+        //    var maxDamageScoreShowCount = 5;
+        //    var damageShowCount = 0;           
+        //    for (var playerId in damageDealtData) {
+        //        if (damageShowCount < maxDamageScoreShowCount) {
+        //            yValue += 13;
+        //            game.debug.text(playerList[playerId].nickname + " : " + damageDealtData[playerId], 2, yValue, "#666666");
+        //            damageShowCount++;
+        //        } else {
+        //            return;
+        //        }
+        //    }
+        //}
     }
 });
 
+function sortObj(object, sortFunc) {
+    var rv = [];
+    for (var k in object) {
+        if (object.hasOwnProperty(k)) rv.push({ key: k, value: object[k] });
+    }
+    rv.sort(function (o1, o2) {
+        return sortFunc(o1.key, o2.key);
+    });
+    return rv;
+}
 
 var createSocketEvents = function () {
     socket = io(window.location.origin, { query: 'nickname=' + $('#nicknameText').val() });
@@ -231,10 +256,10 @@ var createSocketEvents = function () {
             //console.log("this should be already logged in player" + player.id);
         };
     });
-
+    
     socket.on(Constants.CommandNames.HealthUpdate, function (healthList) {
         for (var id in healthList) {
-           
+            
             playerList[id].health = healthList[id];
         }
     });
@@ -262,7 +287,7 @@ var createSocketEvents = function () {
         player.weapon.anchor.setTo(0.5, 0.5);
         player.weapon.tint = "0x" + player.color.replace('#', '');
         
-        player.shield= game.add.sprite(0, 0, 'shield');
+        player.shield = game.add.sprite(0, 0, 'shield');
         player.shield.anchor.setTo(0.5, 0.5);
         player.shield.tint = "0x" + player.color.replace('#', '');
         
@@ -282,7 +307,7 @@ var createSocketEvents = function () {
         //console.log("player " + killedPlayer.id + " is killed.");
         kill(killedPlayer);
     });
-
+    
     socket.on(Constants.CommandNames.PlayerPosRotUpdate, function (playersData) {
         for (var id in playersData) {
             var data = playersData[id];
@@ -319,6 +344,10 @@ var createSocketEvents = function () {
                 }
             }
         }
+    });
+    
+    socket.on(Constants.CommandNames.DamageDealtUpdate, function (pDamageDealtData) {
+        damageDealtData = pDamageDealtData;
     });
     
     socket.on("animAttack", function (animPos) {

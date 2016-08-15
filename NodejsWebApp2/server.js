@@ -1,25 +1,37 @@
-﻿var express = require('express');
+﻿var serverConfig = require('./server/core/serverConfig.js');
+var utils = require('./server/utils/utils.js');
+var logger = require('./server/utils/logger.js');
+var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
 var Constants = require('./shared/js/common/constants.js');
 var io = require('socket.io')(serv, {});
 var p2 = require('p2');
+
 var Player = require('./server/player.js');
 var Weapon = require('./server/weapon.js');
 var Shield = require('./server/shield.js');
 
-function log(message) {
-    console.log(getDateTime() + " || " + message);
-}
+// Server props
+var lastTimeSeconds;
+var totalElapsedTimeFromSeconds = 0;
 
-function kill(playerBody) {
-    bodyRemovalList.push(playerBody);
-}
+// Data sync update frequency constants
+var gameTimeUpdateFrequencyFromSeconds = 1;
+var healthUpdateFrequencyFromSeconds = 1 / 10;
+var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
+var damageDealtUpdateFrequencyFromSeconds = 1;
 
+// gameplay props
+var damageDealtData = {};
+var bodyRemovalList = [];
+
+// creating world
 var world = new p2.World({
     gravity: [0, 0]
 });
 
+// opening server
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
@@ -29,73 +41,66 @@ serv.listen(process.env.port || 5009, function (s) {
 
 });
 
-
 io.on(Constants.EventNames.Connection, function (socket) {
     onPlayerConnect(socket, io);
 });
 
+// player connect event
+var onPlayerConnect = function (socket, io) {
+    //firstly send already logged in playerList to the sender
+    socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
+    
+    //player is created
+    var player = createPlayer(socket);
+    logger.log(player.nickname + " is joined the server.");
+    
+    //send playerInfo to the sender
+    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
+    
+    //send playerInfo to the all clients except sender
+    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
+    
+    attachEvents(socket, player);
+};
+
+// player disconnect event
 var onPlayerDisconnect = function (player, socket) {
-    log('user is disconnected. nickname:' + player.nickname);
+    logger.log(player.nickname + " is disconnected from server.");
     socket.broadcast.emit(Constants.CommandNames.DisconnectedPlayerInfo, player.clientInfo);//send playerInfo to the all clients except sender
     kill(player);
 };
 
-var getClientPlayerList = function () {
-    var clientList = {};
-    for (var i = 0; i < world.bodies.length; i++) {
-        var body = world.bodies[i];
-        if (body.isBodyAlive) {
-            var player = body;
-            clientList[player.id] = player.clientInfo;
-        }
-    };
-    return clientList;
-};
-
-var slashRate = 0.25;
-
-function attack(player, mousePosition) {
-    if (totalElapsedTimeFromSeconds > player.nextAttackTime) {
-        player.nextAttackTime = totalElapsedTimeFromSeconds + slashRate;
-        return true;
-    } else {
-        return false;
-    }
+// attaching events
+function attachEvents(socket, player) {
+    //attach player disconnected event
+    socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
+        onPlayerDisconnect(player, socket);
+    });
+    
+    //attach mouse events
+    socket.on(Constants.EventNames.OnMouseClicked, function (mousePosition) {
+        onMouseClicked(player, mousePosition);
+    });
+    
+    //attach movement events
+    socket.on(Constants.EventNames.OnUpKeyPressed, function () {
+        onUpKeyPressed(player);
+    });
+    socket.on(Constants.EventNames.OnDownKeyPressed, function () {
+        onDownKeyPressed(player);
+    });
+    socket.on(Constants.EventNames.OnLeftKeyPressed, function () {
+        onLeftKeyPressed(player);
+    });
+    socket.on(Constants.EventNames.OnRightKeyPressed, function () {
+        onRightKeyPressed(player);
+    });
+    socket.on(Constants.CommandNames.MousePosition, function (mousePos) {
+        updateRotation(player, mousePos);
+    });
 }
 
-function processSlash(player, mousePosition) {
-    //var maxSlashDistance = 30;
-    
-    //var xDistance = (mousePosition.x - player.position[0]);
-    //var yDistance = (mousePosition.y - player.position[1]);
-    ////var d = Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
-    ///*var slashPower = d * 0.3;
-    //  	console.log(d);*/
-    
-    //  	if (xDistance > maxSlashDistance) {
-    //    xDistance = maxSlashDistance;
-    //} else if (xDistance < -maxSlashDistance) {
-    //    xDistance = -maxSlashDistance
-    //}
-    
-    //if (yDistance > maxSlashDistance) {
-    //    yDistance = maxSlashDistance;
-    //} else if (yDistance < -maxSlashDistance) {
-    //    yDistance = -maxSlashDistance
-    //}
-    
-    //player.weapon.position[0] = player.weapon.position[0] + xDistance;
-    //player.weapon.position[1] = player.weapon.position[1] + yDistance;
-    
-    world.removeConstraint(player.weaponConstraint);
-    player.weapon.applyForceLocal([player.weapon.mass * 20000, 0]);
-    executeAfterSeconds(0.1, function () {
-        world.addConstraint(player.weaponConstraint)
-    });
-
-    
-};
-
+// handling user inputs
 var onMouseClicked = function (player, mousePosition) {
     var canSlash = attack(player);
     if (canSlash) {
@@ -119,18 +124,116 @@ var onRightKeyPressed = function (player) {
     player.position[0]++;
 };
 
-var onUpdateRotation = function (player, rotation) {
-    player.angle = rotation;
-};
-
 var updateRotation = function (player, mousePosition) {
     player.angle = Math.atan2(mousePosition.x - player.weapon.position[0], -(mousePosition.y - player.weapon.position[1]));
 };
 
-var onPlayerConnect = function (socket, io) {
-    //send playerList to the sender
-    socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
+// main Game Loop
+setInterval(function () {
+    totalElapsedTimeFromSeconds += serverConfig.server.serverProcessFrequency;
+    deltaTime = totalElapsedTimeFromSeconds - lastTimeSeconds;
     
+    processWorld(deltaTime);
+    
+    //Sending elapsed game time to all clients
+    executeByIntervalFromSeconds(serverConfig.server.gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
+    
+    lastTimeSeconds = totalElapsedTimeFromSeconds;
+}, 1000 * serverConfig.server.serverProcessFrequency);
+
+// collision checking
+world.on('beginContact', function (evt) {
+    var humanBody = null;
+    var weaponBody = null;
+    if (evt.bodyA.bodyType == evt.bodyB.bodyType || (evt.bodyA.bodyType == "shield" || evt.bodyB.bodyType == "shield")) {
+        return;
+    }
+    
+    if (evt.bodyA.bodyType == "weapon") {
+        if (evt.bodyA.playerId == evt.bodyB.id) {
+            return;
+        } else {
+            weaponBody = evt.bodyA;
+            humanBody = evt.bodyB;
+        }
+    } else if (evt.bodyB.bodyType == "weapon") {
+        if (evt.bodyB.playerId == evt.bodyA.id) {
+            return;
+        } else {
+            weaponBody = evt.bodyB;
+            humanBody = evt.bodyA;
+        }
+    }
+    
+    var attacker = world.getBodyById(weaponBody.playerId);          
+    humanBody.health -= weaponBody.damage;
+    damageDealtData[weaponBody.playerId] += weaponBody.damage;  //update player total damage dealt
+    
+    io.emit("animAttack", { x: humanBody.position[0], y: humanBody.position[1] });//sending damage dealt position for client animation - should be updated ( calculate in client )
+    if (humanBody.health <= 0) {
+        io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
+        kill(humanBody);
+    }    
+});
+
+// core game functions
+var processWorld = function (deltaTime) {
+    world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
+    clearRemovedBodies();
+    executeByIntervalFromSeconds(serverConfig.server.healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
+    executeByIntervalFromSeconds(serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
+    //executeByIntervalFromSeconds(damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
+};
+
+function clearRemovedBodies() {
+    if (bodyRemovalList.length > 0) {
+        for (var i = 0; i < bodyRemovalList.length; i++) {
+            var body = bodyRemovalList[i];
+            world.removeConstraint(body.weaponConstraint);
+            world.removeConstraint(body.shieldConstraint);
+            world.removeBody(body.weapon);
+            world.removeBody(body.shield);
+            world.removeBody(body);
+            body.socket.disconnect();
+        }
+        bodyRemovalList = [];
+    }
+};
+
+var getClientPlayerList = function () {
+    var clientList = {};
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];
+        if (body.isBodyAlive) {
+            var player = body;
+            clientList[player.id] = player.clientInfo;
+        }
+    };
+    return clientList;
+};
+
+function kill(playerBody) {
+    bodyRemovalList.push(playerBody);
+}
+
+function attack(player, mousePosition) {
+    if (totalElapsedTimeFromSeconds > player.nextAttackTime) {
+        player.nextAttackTime = totalElapsedTimeFromSeconds + serverConfig.gamePlay.slashRate;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function processSlash(player, mousePosition) {
+    world.removeConstraint(player.weaponConstraint);
+    player.weapon.applyForceLocal([player.weapon.mass * 20000, 0]);
+    executeAfterSeconds(0.1, function () {
+        world.addConstraint(player.weaponConstraint)
+    });
+};
+
+function createPlayer(socket) {
     var player = new Player(socket);
     player.weapon = new Weapon(socket, player.position, player.id);
     player.shield = new Shield(socket, player.position, player.id);
@@ -143,43 +246,13 @@ var onPlayerConnect = function (socket, io) {
     world.addConstraint(player.weaponConstraint);
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
     world.addConstraint(player.shieldConstraint);
+    
+    //assign damage dealt data of player
+    damageDealtData[player.id] = 0;
+    return player;
+}
 
-    log('a user is connected. nickname:' + player.nickname);
-    
-    //Player disconnected event
-    socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
-        onPlayerDisconnect(player, socket);
-    });
-    
-    //send playerInfo to the sender
-    socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
-    
-    //send playerInfo to the all clients except sender
-    socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
-    
-    //Mouse events
-    socket.on(Constants.EventNames.OnMouseClicked, function (mousePosition) {
-        onMouseClicked(player, mousePosition);
-    });
-    
-    //Movement events
-    socket.on(Constants.EventNames.OnUpKeyPressed, function () {
-        onUpKeyPressed(player);
-    });
-    socket.on(Constants.EventNames.OnDownKeyPressed, function () {
-        onDownKeyPressed(player);
-    });
-    socket.on(Constants.EventNames.OnLeftKeyPressed, function () {
-        onLeftKeyPressed(player);
-    });
-    socket.on(Constants.EventNames.OnRightKeyPressed, function () {
-        onRightKeyPressed(player);
-    });
-    socket.on(Constants.CommandNames.MousePosition, function (mousePos) {
-        updateRotation(player, mousePos);
-    });
-};
-
+// update functions
 var sendPosRotData = function () {
     var playerPosRotData = {};
     
@@ -210,107 +283,17 @@ var sendPosRotData = function () {
     io.emit(Constants.CommandNames.PlayerPosRotUpdate, playerPosRotData);
 };
 
-var lastTimeSeconds;
-var totalElapsedTimeFromSeconds = 0;
-var serverProcessFrequency = 1 / 60;
-var gameTimeUpdateFrequencyFromSeconds = 1;
-var healthUpdateFrequencyFromSeconds = 1 / 10;
-var positionAndRotationUpdateFrequencyFromSeconds = 1 / 30;
-
-var maxSubSteps = 10;
-
-//Main Game Loop
-setInterval(function () {
-    totalElapsedTimeFromSeconds += serverProcessFrequency;
-    deltaTime = totalElapsedTimeFromSeconds - lastTimeSeconds;
-    
-    processWorld();
-    
-    //Sending elapsed game time to all clients
-    executeByIntervalFromSeconds(gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
-    
-    lastTimeSeconds = totalElapsedTimeFromSeconds;
-}, 1000 * serverProcessFrequency);
-
-var executeAfterSeconds = function (seconds, executeFunction) {
-    setTimeout(function () { executeFunction() }, seconds * 1000);
-}
-
-var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
-    var mod = totalElapsedTimeFromSeconds % frequency;
-    if (mod < serverProcessFrequency) {
-        functionToProcess();
+var sendAllPlayersHealthInfo = function () {
+    var allHealthList = {};
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];
+        if (body.isBodyAlive) {
+            var player = body;
+            allHealthList[player.id] = player.health;
+        }
     }
-}
-
-var bodyRemovalList=[];
-var processWorld = function () {
-    // The step method moves the bodies forward in time.
-    world.step(serverProcessFrequency, deltaTime, maxSubSteps);
-    clearRemovedBodies();
-    executeByIntervalFromSeconds(healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
-    executeByIntervalFromSeconds(positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
-    
-    //sendPosRotData();
+    io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
 };
-
-function clearRemovedBodies() {
-    if (bodyRemovalList.length > 0) {
-        for (var i = 0; i < bodyRemovalList.length; i++) {
-            var body = bodyRemovalList[i];
-            world.removeConstraint(body.weaponConstraint);
-            world.removeConstraint(body.shieldConstraint);
-            world.removeBody(body.weapon);
-            world.removeBody(body.shield);
-            world.removeBody(body);
-            body.socket.disconnect();
-        }
-        bodyRemovalList = [];
-    }
-}
-
-world.on('beginContact', function (evt) {
-    var humanBody = null;
-    var weaponBody = null;
-    if (evt.bodyA.bodyType == evt.bodyB.bodyType || (evt.bodyA.bodyType == "shield" || evt.bodyB.bodyType == "shield")) {
-        return;
-    }
-    
-    //Todo:yururken weapona çarparsa hata verıyor şu an onu da handle etmek lazım
-    
-
-    if (evt.bodyA.bodyType == "weapon") {
-        if (evt.bodyA.playerId == evt.bodyB.id) {
-            return;
-        } else {
-            weaponBody = evt.bodyA;
-            humanBody = evt.bodyB;
-        }
-    } else if (evt.bodyB.bodyType == "weapon") {
-        if (evt.bodyB.playerId == evt.bodyA.id) {
-            return;
-        } else { 
-            weaponBody = evt.bodyB;
-            humanBody = evt.bodyA;
-        }
-    }
-    
-    //if (evt.bodyA.isBodyAlive && !evt.bodyB.isBodyAlive) {
-        var attacker = world.getBodyById(weaponBody.playerId);
-        
-        humanBody.health -= weaponBody.damage;
-        io.emit("animAttack", { x: humanBody.position[0], y: humanBody.position[1] });
-        //evt.bodyA.socket.emit(Constants.CommandNames.DamageDealt, evt.bodyA.health);//send new health to attacked player
-        //io.emit(Constants.CommandNames.DamageGiven, evt.bodyA.id);//send attacked player info  to attacker player
-        //log(attacker.nickname + " is attacked to " + evt.bodyA.nickname + ". " + evt.bodyA.nickname + " health:" + evt.bodyA.health);
-        if (humanBody.health <= 0) {
-            io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
-            kill(humanBody);
-        }
-        
-    //}
-    
-});
 
 var sendAllPlayersHealthInfo = function () {
     var allHealthList = {};
@@ -324,31 +307,22 @@ var sendAllPlayersHealthInfo = function () {
     io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
 };
 
+var sendAllPlayersDamageDealthInfo = function () {    
+    io.emit(Constants.CommandNames.DamageDealtUpdate, damageDealtData);
+};
+
 var sendGameTimeToAllClients = function () {
     io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));
-}
+};
 
-function getDateTime() {
-    
-    var date = new Date();
-    
-    var hour = date.getHours();
-    hour = (hour < 10 ? "0" : "") + hour;
-    
-    var min = date.getMinutes();
-    min = (min < 10 ? "0" : "") + min;
-    
-    var sec = date.getSeconds();
-    sec = (sec < 10 ? "0" : "") + sec;
-    
-    var year = date.getFullYear();
-    
-    var month = date.getMonth() + 1;
-    month = (month < 10 ? "0" : "") + month;
-    
-    var day = date.getDate();
-    day = (day < 10 ? "0" : "") + day;
-    
-    return year + "." + month + "." + day + " " + hour + ":" + min + ":" + sec;
+// core util functions
+var executeAfterSeconds = function (seconds, executeFunction) {
+    setTimeout(function () { executeFunction() }, seconds * 1000);
+};
 
-}
+var executeByIntervalFromSeconds = function (frequency, functionToProcess) {
+    var mod = totalElapsedTimeFromSeconds % frequency;
+    if (mod < serverConfig.server.serverProcessFrequency) {
+        functionToProcess();
+    }
+};

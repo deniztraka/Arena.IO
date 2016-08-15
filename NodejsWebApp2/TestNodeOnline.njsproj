@@ -33,7 +33,10 @@
   <ItemGroup>
     <Compile Include="public\js\client.js" />
     <Compile Include="server.js" />
+    <Compile Include="server\core\serverConfig.js" />
     <Compile Include="server\shield.js" />
+    <Compile Include="server\utils\logger.js" />
+    <Compile Include="server\utils\utils.js" />
     <Compile Include="server\weapon.js" />
     <Compile Include="shared\js\common\constants.js" />
     <Compile Include="server\player.js" />
@@ -55,6 +58,7 @@
     <Folder Include="public\assets\fonts\bitmap\" />
     <Folder Include="public\assets\particles\" />
     <Folder Include="public\assets\sprites\tiles\" />
+    <Folder Include="server\utils\" />
     <Folder Include="shared\" />
     <Folder Include="server\" />
     <Folder Include="public\" />

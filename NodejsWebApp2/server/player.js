@@ -19,7 +19,7 @@ var player = function (socket) {
     this.color = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
     this.health = 100;
     this.nextAttackTime = 0;
-    this.bodyType = "human";  
+    this.bodyType = "human";    
     p2.Body.call(this, {
         mass: 1,
         position: [Math.floor(300 * Math.random()), Math.floor(300 * Math.random())],
