@@ -183,7 +183,14 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         //gameTimeText = game.add.bitmapText(game.world.bounds.width, 10, 'carrier_command', '--');
         //gameTimeText.anchor.x = 1;
         //gameTimeText.anchor.y = 0.5;
-        //gameTimeText.scale = new Phaser.Point(0.5,0.5);      
+        //gameTimeText.scale = new Phaser.Point(0.5,0.5);  
+        
+        game.scale.pageAlignHorizontally = true;
+        game.scale.pageAlignVertically = true;
+        // using RESIZE scale mode
+        game.scale.scaleMode = Phaser.ScaleManager.SHOWALL;
+        
+            
         createSocketEvents();
     },
     update: function () {
