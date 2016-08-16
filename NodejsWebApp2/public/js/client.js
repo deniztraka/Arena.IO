@@ -14,6 +14,7 @@ var upKey;
 var downKey;
 var leftKey;
 var rightKey;
+var shiftKey;
 var wKey;
 var aKey;
 var dKey;
@@ -68,6 +69,16 @@ var checkMovement = function (socket) {
     else if (rightKey.isDown || dKey.isDown) {
         socket.emit(Constants.EventNames.OnRightKeyPressed, true);
         //currentPlayer.sprite.position.x++;
+    }
+    
+    if (shiftKey.isDown) {
+        socket.emit(Constants.EventNames.OnShiftKeyPressed, true);
+    }
+    
+    game.input.keyboard.onUpCallback = function (e) {
+        if (e.keyCode == Phaser.Keyboard.SHIFT) {
+            socket.emit(Constants.EventNames.OnShiftKeyPressed, false);
+        }
     }
 }
 
@@ -174,6 +185,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        shiftKey = game.input.keyboard.addKey(Phaser.Keyboard.SHIFT)
         
         wKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
         sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
@@ -190,7 +202,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         // using RESIZE scale mode
         game.scale.scaleMode = Phaser.ScaleManager.SHOWALL;
         
-            
+        
         createSocketEvents();
     },
     update: function () {
@@ -215,7 +227,11 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");
             game.debug.text("Online: " + onlineCount, 2, 30, "#666666");
             
-            game.debug.text(currentPlayer.nickname + " : " + currentPlayer.health || '--', 2, game.world.bounds.height - 5, currentPlayer.color);
+            
+            game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 35, currentPlayer.color);
+            
+            game.debug.text("Health : " + currentPlayer.health || '--', 2, $(window).height() - 5, currentPlayer.color);
+            game.debug.text("Stamina : " + currentPlayer.stamina || '--', 2, $(window).height() - 20, currentPlayer.color);
         }
         
         //if (damageDealtData) {
@@ -274,10 +290,11 @@ var createSocketEvents = function () {
         };
     });
     
-    socket.on(Constants.CommandNames.HealthUpdate, function (healthList) {
-        for (var id in healthList) {
+    socket.on(Constants.CommandNames.HealthStaminaUpdate, function (healthStaminaData) {
+        for (var id in healthStaminaData) {
             
-            playerList[id].health = healthList[id];
+            playerList[id].health = healthStaminaData[id].health;
+            playerList[id].stamina = healthStaminaData[id].stamina;
         }
     });
     

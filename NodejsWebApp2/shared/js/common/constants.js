@@ -8,6 +8,7 @@
         OnDownKeyPressed: "onDownKeyPressed",
         OnLeftKeyPressed: "onLeftKeyPressed",
         OnRightKeyPressed: "onRightKeyPressed",
+        OnShiftKeyPressed: "onShiftKeyPressed",
         OnMouseClicked: "onMouseClicked"
     },
     CommandNames : {
@@ -20,7 +21,7 @@
         Killed : "killed",
         DamageDealtUpdate : "DamageDealtUpdate",
         DamageGiven: "damageGiven",
-        HealthUpdate: "healthUpdate"
+        HealthStaminaUpdate: "healthStaminaUpdate"
     }
 };
 

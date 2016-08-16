@@ -64,9 +64,13 @@ function attachEvents(socket, player) {
     socket.on(Constants.EventNames.OnRightKeyPressed, function () {
         onRightKeyPressed(player);
     });
+    socket.on(Constants.EventNames.OnShiftKeyPressed, function (isDown) {        
+        onShiftKeyPressed(player,isDown);
+    });
     socket.on(Constants.CommandNames.MousePosition, function (mousePos) {
         updateRotation(player, mousePos);
     });
+    
 }
 
 // player connect event
@@ -103,19 +107,33 @@ var onMouseClicked = function (player, mousePosition) {
 };
 
 var onUpKeyPressed = function (player) {
-    player.position[1]--;
+    player.position[1] -= player.isRunning ? player.speed * serverConfig.gamePlay.runningSpeedMultiplier : player.speed;
 };
 
 var onDownKeyPressed = function (player) {
-    player.position[1]++;
+    player.position[1]+= player.isRunning ? player.speed * serverConfig.gamePlay.runningSpeedMultiplier : player.speed;
 };
 
 var onLeftKeyPressed = function (player) {
-    player.position[0]--;
+    player.position[0]-= player.isRunning ? player.speed * serverConfig.gamePlay.runningSpeedMultiplier : player.speed;
 };
 
 var onRightKeyPressed = function (player) {
-    player.position[0]++;
+    player.position[0]+= player.isRunning ? player.speed * serverConfig.gamePlay.runningSpeedMultiplier : player.speed;
+};
+
+var onShiftKeyPressed = function (player, isDown) {
+    player.isRunning = isDown;
+    if (isDown) {
+        if (player.stamina > 0) {
+            player.stamina -= serverConfig.gamePlay.staminaDecreaseRateWhileRunning;
+        } else {
+            player.isRunning = false;
+            player.stamina = 0;
+        }
+    } else { 
+        player.isRunning = false;
+    }        
 };
 
 var updateRotation = function (player, mousePosition) {
@@ -144,7 +162,7 @@ world.on('beginContact', function (evt) {
     }
     
     if (evt.bodyA.bodyType == "weapon") {
-        if (evt.bodyA.playerId == evt.bodyB.id) {
+        if (evt.bodyA.playerId == evt.bodyB.id) {//eger silah kendininse 
             return;
         } else {
             weaponBody = evt.bodyA;
@@ -174,7 +192,10 @@ world.on('beginContact', function (evt) {
 var processWorld = function (deltaTime) {
     world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
     clearRemovedBodies();
-    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthUpdateFrequencyFromSeconds, sendAllPlayersHealthInfo);
+
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);
+
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
     //utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
 };
@@ -246,6 +267,18 @@ function createPlayer(socket) {
     return player;
 }
 
+function utilizeStaminaIncrease() {
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];
+        if (body.bodyType == "human") {
+            var player = body
+            if (player.stamina<=100) {             
+                player.stamina += serverConfig.gamePlay.staminaIncreaseRate;
+            }
+        }
+    }
+}
+
 // update functions
 var sendPosRotData = function () {
     var playerPosRotData = {};
@@ -277,28 +310,19 @@ var sendPosRotData = function () {
     io.emit(Constants.CommandNames.PlayerPosRotUpdate, playerPosRotData);
 };
 
-var sendAllPlayersHealthInfo = function () {
-    var allHealthList = {};
+var sendAllPlayersHealthStaminaInfo = function () {
+    var allHealthStaminaData = {};
     for (var i = 0; i < world.bodies.length; i++) {
         var body = world.bodies[i];
         if (body.isBodyAlive) {
             var player = body;
-            allHealthList[player.id] = player.health;
+            allHealthStaminaData[player.id] = {
+                health: Math.floor(player.health),
+                stamina: Math.floor(player.stamina)
+            } 
         }
     }
-    io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
-};
-
-var sendAllPlayersHealthInfo = function () {
-    var allHealthList = {};
-    for (var i = 0; i < world.bodies.length; i++) {
-        var body = world.bodies[i];
-        if (body.isBodyAlive) {
-            var player = body;
-            allHealthList[player.id] = player.health;
-        }
-    }
-    io.emit(Constants.CommandNames.HealthUpdate, allHealthList);
+    io.emit(Constants.CommandNames.HealthStaminaUpdate, allHealthStaminaData);
 };
 
 var sendAllPlayersDamageDealthInfo = function () {
