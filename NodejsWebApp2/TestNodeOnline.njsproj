@@ -47,6 +47,8 @@
     <Content Include="public\assets\fonts\bitmap\nokia16.png" />
     <Content Include="public\assets\fonts\bitmap\nokia16.xml" />
     <Content Include="public\assets\particles\glass.png" />
+    <Content Include="public\assets\audio\effects\fx_mixdown.ogg" />
+    <Content Include="public\assets\audio\effects\lazer.wav" />
     <Content Include="public\assets\sprites\paddle.png" />
     <Content Include="public\assets\sprites\red_ball.png" />
     <Content Include="public\assets\sprites\red_ballColored.png" />
@@ -62,7 +64,9 @@
   <ItemGroup>
     <Folder Include="public\assets\fonts\" />
     <Folder Include="public\assets\fonts\bitmap\" />
+    <Folder Include="public\assets\audio\" />
     <Folder Include="public\assets\particles\" />
+    <Folder Include="public\assets\audio\effects\" />
     <Folder Include="public\assets\sprites\tiles\" />
     <Folder Include="server\utils\" />
     <Folder Include="shared\" />

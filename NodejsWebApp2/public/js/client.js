@@ -24,6 +24,7 @@ var style;
 var totalGameTimeInSeconds = 0;
 var gameTimeText;
 var damageDealtData;
+var fx;
 
 var manager = null;
 var emitter = null;
@@ -161,6 +162,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
+        game.load.audio('sfx', '/public/assets/audio/effects/fx_mixdown.ogg');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
@@ -191,6 +193,20 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
         aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
         dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        
+        //	Here we set-up our audio sprite
+        fx = game.add.audio('sfx');
+        fx.allowMultiple = true;
+
+        fx.addMarker('hit', 1, 1.0);//alien death
+        fx.addMarker('boss hit', 3, 0.5);
+        fx.addMarker('escape', 4, 3.2);
+        fx.addMarker('meow', 8, 0.5);
+        fx.addMarker('numkey', 9, 0.1);
+        fx.addMarker('ping', 10, 1.0);
+        fx.addMarker('death', 12, 4.2);
+        fx.addMarker('kill', 17, 1.0);//shot
+        fx.addMarker('squit', 19, 0.3);
         
         //gameTimeText = game.add.bitmapText(game.world.bounds.width, 10, 'carrier_command', '--');
         //gameTimeText.anchor.x = 1;
@@ -339,6 +355,7 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.Killed, function (killedPlayer) {
         //console.log("player " + killedPlayer.id + " is killed.");
+        fx.play("kill");
         kill(killedPlayer);
     });
     
@@ -386,6 +403,7 @@ var createSocketEvents = function () {
     
     socket.on("animAttack", function (animPos) {
         particleBurst(animPos);
+        fx.play("hit");
     });
     
     socket.on("tick", function (tick) {
