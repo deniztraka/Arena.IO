@@ -22,7 +22,7 @@ var player = function (socket) {
     this.bodyType = "human";    
     p2.Body.call(this, {
         mass: 1,
-        position: [Math.floor(300 * Math.random()), Math.floor(300 * Math.random())],
+        position: [Math.floor(1920 * Math.random()), Math.floor(1920 * Math.random())],
         type: p2.Body.DYNAMIC
     });
     this.damping = 1;

@@ -105,12 +105,13 @@ function triggerAttackAnimation(position) {
     };
 }
 
-var attackRate = 500;
+var attackRate = 250;
 var nextAttack = 0;
 function attack() {
-    if (game.time.now > nextAttack) {
-        nextAttack = game.time.now + attackRate;
-        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
+    var totalElapsedSeconds = game.time.now;
+    if (totalElapsedSeconds > nextAttack) {
+        nextAttack = totalElapsedSeconds + attackRate;
+        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
     }
 }
 
@@ -137,7 +138,10 @@ function particleBurst(pointer) {
 
 }
 
-var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
+var mousePositionSendRate = 1 / 30;
+var nextMousePositionSendTime = 0;
+
+var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
@@ -149,8 +153,9 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
-        //game.world.setBounds(0, 0, 1920, 1920);
-        tilesprite = game.add.tileSprite(0, 0, 300, 300, 'grass');
+        game.world.setBounds(0, 0, 1920, 1920);
+        
+        tilesprite = game.add.tileSprite(0, 0, game.world.bounds.width, game.world.bounds.height, 'grass');
         game.physics.startSystem(Phaser.Physics.ARCADE);
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');
@@ -158,7 +163,7 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
         
-        //game.camera.follow(tempLocalPlayer.sprite);
+        game.camera.follow(tempLocalPlayer.sprite);
         
         tempLocalPlayer.weapon = game.add.sprite(0, 0, 'paddle');
         tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
@@ -184,7 +189,12 @@ var game = new Phaser.Game(300, 300, Phaser.CANVAS, 'test multi game', {
     update: function () {
         //process player rotation
         if (currentPlayer && currentPlayer.sprite) {
-            socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.x, y: game.input.mousePointer.y });
+            var totalElapsedSeconds = game.time.now;
+            if (totalElapsedSeconds > nextMousePositionSendTime) {
+                nextMousePositionSendTime = totalElapsedSeconds + mousePositionSendRate;
+                socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
+            }
+            
         }
         
         checkMovement(socket);

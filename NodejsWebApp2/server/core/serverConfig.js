@@ -8,6 +8,6 @@
         damageDealtUpdateFrequencyFromSeconds : 1
     },
     gamePlay: {
-        slashRate: 0.5
+        slashRate: 0.25
     }
 }
