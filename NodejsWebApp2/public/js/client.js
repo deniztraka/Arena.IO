@@ -369,3 +369,10 @@ var createSocketEvents = function () {
     });
 };
 
+function resizeGame() {
+    game.scale.setGameSize($(window).width(), $(window).height());
+}
+
+$(window).resize(function () {
+    resizeGame();
+});
