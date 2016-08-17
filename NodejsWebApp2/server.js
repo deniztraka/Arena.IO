@@ -98,7 +98,7 @@ var onPlayerDisconnect = function (player, socket) {
     kill(player);
 };
 
-// handling user inputs
+// processing user inputs
 var onMouseClicked = function (player, mousePosition) {
     var canSlash = attack(player);
     if (canSlash) {
@@ -197,7 +197,7 @@ var processWorld = function (deltaTime) {
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
-    //utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
 };
 
 function clearRemovedBodies() {
@@ -209,6 +209,7 @@ function clearRemovedBodies() {
             world.removeBody(body.weapon);
             world.removeBody(body.shield);
             world.removeBody(body);
+            delete damageDealtData[body.id];
             body.socket.disconnect();
         }
         bodyRemovalList = [];

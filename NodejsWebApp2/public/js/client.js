@@ -8,6 +8,7 @@ Object.size = function (obj) {
 };
 
 var playerList = {};
+
 var currentPlayer;
 var tempLocalPlayer = {};
 var upKey;
@@ -23,8 +24,8 @@ var socket;
 var style;
 var totalGameTimeInSeconds = 0;
 var gameTimeText;
-var damageDealtData;
 var fx;
+var damageDealtList = [];
 
 var manager = null;
 var emitter = null;
@@ -197,7 +198,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         //	Here we set-up our audio sprite
         fx = game.add.audio('sfx');
         fx.allowMultiple = true;
-
+        
         fx.addMarker('hit', 1, 1.0);//alien death
         fx.addMarker('boss hit', 3, 0.5);
         fx.addMarker('escape', 4, 3.2);
@@ -249,21 +250,22 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             game.debug.text("Health : " + currentPlayer.health || '--', 2, $(window).height() - 5, currentPlayer.color);
             game.debug.text("Stamina : " + currentPlayer.stamina || '--', 2, $(window).height() - 20, currentPlayer.color);
         }
-        
-        //if (damageDealtData) {
-        //    var yValue = 50;
-        //    var maxDamageScoreShowCount = 5;
-        //    var damageShowCount = 0;           
-        //    for (var playerId in damageDealtData) {
-        //        if (damageShowCount < maxDamageScoreShowCount) {
-        //            yValue += 13;
-        //            game.debug.text(playerList[playerId].nickname + " : " + damageDealtData[playerId], 2, yValue, "#666666");
-        //            damageShowCount++;
-        //        } else {
-        //            return;
-        //        }
-        //    }
-        //}
+        if (damageDealtList && damageDealtList.length > 0) {
+            var yValue = 80;
+            game.debug.text("Damage Dealt Score", 2, yValue-15, '#ffffff');
+            
+            var maxDamageScoreShowCount = 5;
+            var damageShowCount = 0;
+            for (var i = 0; i < damageDealtList.length; i++) {
+                if (damageShowCount < maxDamageScoreShowCount) {                                        
+                    game.debug.text(playerList[damageDealtList[i].id].nickname + " : " + damageDealtList[i].damageDealt, 2, yValue, playerList[damageDealtList[i].id].color);
+                    damageShowCount++;
+                    yValue += 13;
+                } else {
+                    return;
+                }
+            };
+        }
     }
 });
 
@@ -397,8 +399,16 @@ var createSocketEvents = function () {
         }
     });
     
+    
     socket.on(Constants.CommandNames.DamageDealtUpdate, function (pDamageDealtData) {
-        damageDealtData = pDamageDealtData;
+        damageDealtList = [];
+        for (var key in pDamageDealtData) {
+            var damageDealtVal = pDamageDealtData[key];
+            damageDealtList.push({ id: key, damageDealt: damageDealtVal });
+        }
+        damageDealtList.sort(function (a, b) {
+            return b.damageDealt - a.damageDealt;
+        });
     });
     
     socket.on("animAttack", function (animPos) {
