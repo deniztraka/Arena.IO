@@ -19,6 +19,7 @@ var bodyRemovalList = [];
 
 // gameplay props
 var damageDealtData = {};
+var killCountData = {};
 
 // creating world
 var world = new p2.World({
@@ -185,6 +186,7 @@ world.on('beginContact', function (evt) {
     if (humanBody.health <= 0) {
         io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
         kill(humanBody);
+        killCountData[weaponBody.playerId]++;
     }
 });
 
@@ -197,7 +199,8 @@ var processWorld = function (deltaTime) {
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
-    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.damageDealtUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersKillCountInfo);
 };
 
 function clearRemovedBodies() {
@@ -210,6 +213,7 @@ function clearRemovedBodies() {
             world.removeBody(body.shield);
             world.removeBody(body);
             delete damageDealtData[body.id];
+            delete killCountData[body.id];
             body.socket.disconnect();
         }
         bodyRemovalList = [];
@@ -263,8 +267,9 @@ function createPlayer(socket) {
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
     world.addConstraint(player.shieldConstraint);
     
-    //assign damage dealt data of player
+    //assign damage dealt and killCount data of player
     damageDealtData[player.id] = 0;
+    killCountData[player.id] = 0;
     return player;
 }
 
@@ -328,6 +333,10 @@ var sendAllPlayersHealthStaminaInfo = function () {
 
 var sendAllPlayersDamageDealthInfo = function () {
     io.emit(Constants.CommandNames.DamageDealtUpdate, damageDealtData);
+};
+
+var sendAllPlayersKillCountInfo = function () {
+    io.emit(Constants.CommandNames.KillCountUpdate, killCountData);
 };
 
 var sendGameTimeToAllClients = function () {

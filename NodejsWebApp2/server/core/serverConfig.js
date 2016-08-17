@@ -5,7 +5,7 @@
         gameTimeUpdateFrequencyFromSeconds : 1,
         healthStaminaUpdateFrequencyFromSeconds : 1 / 10,
         positionAndRotationUpdateFrequencyFromSeconds : 1 / 30,
-        damageDealtUpdateFrequencyFromSeconds : 1
+        scoreUpdateFrequencyFromSeconds : 1        
     },
     gamePlay: {
         slashRate: 0.25,

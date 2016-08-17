@@ -26,6 +26,7 @@ var totalGameTimeInSeconds = 0;
 var gameTimeText;
 var fx;
 var damageDealtList = [];
+var killCountList = [];
 
 var manager = null;
 var emitter = null;
@@ -42,16 +43,17 @@ var buildGameTimeText = function (totalGameTimeFromSeconds) {
 };
 
 function kill(player) {
-    if (playerList[player.id].nicknameText) {
-        playerList[player.id].nicknameText.destroy();
+    if (playerList[player.id]) {
+        if (playerList[player.id].nicknameText) {
+            playerList[player.id].nicknameText.destroy();
+        }
+        
+        playerList[player.id].weapon.destroy();
+        playerList[player.id].shield.destroy();
+        playerList[player.id].sprite.destroy();
+        
+        delete playerList[player.id];
     }
-    
-    playerList[player.id].weapon.destroy();
-    playerList[player.id].shield.destroy();
-    playerList[player.id].sprite.destroy();
-    
-    delete playerList[player.id];
-    
 }
 
 var checkMovement = function (socket) {
@@ -241,25 +243,47 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     render: function () {
         var onlineCount = parseInt(Object.size(playerList));
         if (currentPlayer) {
+            //Fps & Online Count Rendering
             game.debug.text("Fps: " + game.time.fps || '--', 2, 15, "#666666");
             game.debug.text("Online: " + onlineCount, 2, 30, "#666666");
             
-            
+            //Player Nickname Rendering
             game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 35, currentPlayer.color);
             
+            //Player Health & Stamina Rendering
             game.debug.text("Health : " + currentPlayer.health || '--', 2, $(window).height() - 5, currentPlayer.color);
             game.debug.text("Stamina : " + currentPlayer.stamina || '--', 2, $(window).height() - 20, currentPlayer.color);
         }
+        
+        //Damage Dealt Score Table Rendering
         if (damageDealtList && damageDealtList.length > 0) {
             var yValue = 80;
-            game.debug.text("Damage Dealt Score", 2, yValue-15, '#ffffff');
+            game.debug.text("Damage Dealt Score", 2, yValue - 15, '#ffffff');
             
             var maxDamageScoreShowCount = 5;
             var damageShowCount = 0;
             for (var i = 0; i < damageDealtList.length; i++) {
-                if (damageShowCount < maxDamageScoreShowCount) {                                        
+                if (damageShowCount < maxDamageScoreShowCount && playerList[damageDealtList[i].id]) {
                     game.debug.text(playerList[damageDealtList[i].id].nickname + " : " + damageDealtList[i].damageDealt, 2, yValue, playerList[damageDealtList[i].id].color);
                     damageShowCount++;
+                    yValue += 13;
+                } else {
+                    return;
+                }
+            };
+        }
+        
+        //Kill Count Score Table Rendering
+        if (killCountList && killCountList.length > 0) {
+            var yValue = 175;
+            game.debug.text("Kill Count Score", 2, yValue - 15, '#ffffff');
+            
+            var maxKillScoreShowCount = 5;
+            var killShowCount = 0;
+            for (var i = 0; i < killCountList.length; i++) {
+                if (killShowCount < maxKillScoreShowCount) {
+                    game.debug.text(playerList[killCountList[i].id].nickname + " : " + killCountList[i].killCount, 2, yValue, playerList[killCountList[i].id].color);
+                    killShowCount++;
                     yValue += 13;
                 } else {
                     return;
@@ -408,6 +432,17 @@ var createSocketEvents = function () {
         }
         damageDealtList.sort(function (a, b) {
             return b.damageDealt - a.damageDealt;
+        });
+    });
+    
+    socket.on(Constants.CommandNames.KillCountUpdate, function (killCountData) {
+        killCountList = [];
+        for (var key in killCountData) {
+            var killCountVal = killCountData[key];
+            killCountList.push({ id: key, killCount: killCountVal });
+        }
+        killCountList.sort(function (a, b) {
+            return b.killCount - a.killCount;
         });
     });
     

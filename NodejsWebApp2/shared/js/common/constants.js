@@ -19,7 +19,8 @@
         PlayerPosRotUpdate: "playerPosRotUpdate",
         MousePosition : "mousePosition",
         Killed : "killed",
-        DamageDealtUpdate : "DamageDealtUpdate",
+        DamageDealtUpdate : "damageDealtUpdate",
+        KillCountUpdate : "killCountUpdate",
         DamageGiven: "damageGiven",
         HealthStaminaUpdate: "healthStaminaUpdate"
     }
