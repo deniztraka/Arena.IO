@@ -1,16 +1,20 @@
-﻿
-Object.size = function (obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-};
+﻿ClientCore.Helpers.Init();
+
+//Props
+var totalGameTimeInSeconds = 0;
+var socket;
 
 var playerList = {};
+var damageDealtList = [];
+var killCountList = [];
 
-var currentPlayer;
+// *Player
 var tempLocalPlayer = {};
+var currentPlayer;
+var nextAttack = 0;
+var nextMousePositionSendTime = 0;
+
+// *Keys
 var upKey;
 var downKey;
 var leftKey;
@@ -20,141 +24,11 @@ var wKey;
 var aKey;
 var dKey;
 var sKey;
-var socket;
+
+// *Phaser Props
 var style;
-var totalGameTimeInSeconds = 0;
-var gameTimeText;
 var fx;
-var damageDealtList = [];
-var killCountList = [];
-
-var manager = null;
 var emitter = null;
-var circle = null;
-
-var buildGameTimeText = function (totalGameTimeFromSeconds) {
-    
-    //Todo : Get time string hh:mm:ss
-    var seconds = totalGameTimeFromSeconds % 60;
-    var minutes = Math.floor(totalGameTimeFromSeconds / 60);
-    var hours = Math.floor(minutes / 60);
-    
-    return hours + ':' + minutes + ':' + seconds;
-};
-
-function kill(player) {
-    if (playerList[player.id]) {
-        if (playerList[player.id].nicknameText) {
-            playerList[player.id].nicknameText.destroy();
-        }
-        
-        playerList[player.id].weapon.destroy();
-        playerList[player.id].shield.destroy();
-        playerList[player.id].sprite.destroy();
-        
-        delete playerList[player.id];
-    }
-}
-
-var checkMovement = function (socket) {
-    if (upKey.isDown || wKey.isDown) {
-        socket.emit(Constants.EventNames.OnUpKeyPressed, true);
-        //currentPlayer.sprite.position.y--;
-    }
-    else if (downKey.isDown || sKey.isDown) {
-        socket.emit(Constants.EventNames.OnDownKeyPressed, true);
-        //currentPlayer.sprite.position.y++;
-    }
-    
-    if (leftKey.isDown || aKey.isDown) {
-        socket.emit(Constants.EventNames.OnLeftKeyPressed, true);
-        //currentPlayer.sprite.position.x--;
-    }
-    else if (rightKey.isDown || dKey.isDown) {
-        socket.emit(Constants.EventNames.OnRightKeyPressed, true);
-        //currentPlayer.sprite.position.x++;
-    }
-    
-    if (shiftKey.isDown) {
-        socket.emit(Constants.EventNames.OnShiftKeyPressed, true);
-    }
-    
-    game.input.keyboard.onUpCallback = function (e) {
-        if (e.keyCode == Phaser.Keyboard.SHIFT) {
-            socket.emit(Constants.EventNames.OnShiftKeyPressed, false);
-        }
-    }
-}
-
-function triggerAttackAnimation(position) {
-    var maxSlashDistance = 20;
-    
-    var xDistance = (position.x - currentPlayer.position.x);
-    var yDistance = (position.y - currentPlayer.position.y);
-    
-    if (xDistance > maxSlashDistance) {
-        xDistance = maxSlashDistance;
-    } else if (xDistance < -maxSlashDistance) {
-        xDistance = -maxSlashDistance
-    }
-    
-    if (yDistance > maxSlashDistance) {
-        yDistance = maxSlashDistance;
-    } else if (yDistance < -maxSlashDistance) {
-        yDistance = -maxSlashDistance
-    }
-    
-    var animPosX = currentPlayer.weapon.position.x + xDistance;
-    var animPosY = currentPlayer.weapon.position.y + yDistance;
-    
-    var radius = 20;
-    var thereIsPlayer = false;
-    for (var id in playerList) {
-        var player = playerList[id];
-        //debugger;
-        if (player.position.x + radius / 2 > animPosX && player.position.x - radius / 2 < animPosX) {
-            if (player.position.y + radius / 2 > animPosY && player.position.y - radius / 2 < animPosY) {
-                particleBurst({ x: player.position.x, y: player.position.y });
-            }
-        }
-    };
-}
-
-var attackRate = 250;
-var nextAttack = 0;
-function attack() {
-    var totalElapsedSeconds = game.time.now;
-    if (totalElapsedSeconds > nextAttack) {
-        nextAttack = totalElapsedSeconds + attackRate;
-        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
-    }
-}
-
-var checkActions = function (socket) {
-    game.input.activePointer.leftButton.onDown.add(function () {
-        attack(socket);
-        
-    }, this);
-};
-
-function particleBurst(pointer) {
-    
-    //  Position the emitter where the mouse/touch event was
-    emitter.x = pointer.x;
-    emitter.y = pointer.y;
-    
-    emitter.setScale(0.25, 0.001, 0.25, 0.001, 750, Phaser.Easing.Quintic.Out);
-    
-    //  The first parameter sets the effect to "explode" which means all particles are emitted at once
-    //  The second gives each particle a 2000ms lifespan
-    //  The third is ignored when using burst/explode mode
-    //  The final parameter (10) is how many particles will be emitted in this single burst
-    emitter.start(true, 500, null, 5);
-
-}
-
-var mousePositionSendRate = 1 / 30;
-var nextMousePositionSendTime = 0;
 
 var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     preload: function () {
@@ -229,10 +103,9 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         if (currentPlayer && currentPlayer.sprite) {
             var totalElapsedSeconds = game.time.now;
             if (totalElapsedSeconds > nextMousePositionSendTime) {
-                nextMousePositionSendTime = totalElapsedSeconds + mousePositionSendRate;
+                nextMousePositionSendTime = totalElapsedSeconds + ClientCore.Constants.Server.MousePositionSendRate;
                 socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
-            }
-            
+            }            
         }
         
         checkMovement(socket);
@@ -293,17 +166,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     }
 });
 
-function sortObj(object, sortFunc) {
-    var rv = [];
-    for (var k in object) {
-        if (object.hasOwnProperty(k)) rv.push({ key: k, value: object[k] });
-    }
-    rv.sort(function (o1, o2) {
-        return sortFunc(o1.key, o2.key);
-    });
-    return rv;
-}
-
+//Socket event handling
 var createSocketEvents = function () {
     socket = io(window.location.origin, { query: 'nickname=' + $('#nicknameText').val() });
     socket.on(Constants.EventNames.Connect, function () {
@@ -456,6 +319,116 @@ var createSocketEvents = function () {
     });
 };
 
+//Game core functions
+function kill(player) {
+    if (playerList[player.id]) {
+        if (playerList[player.id].nicknameText) {
+            playerList[player.id].nicknameText.destroy();
+        }
+        
+        playerList[player.id].weapon.destroy();
+        playerList[player.id].shield.destroy();
+        playerList[player.id].sprite.destroy();
+        
+        delete playerList[player.id];
+    }
+}
+
+var checkMovement = function (socket) {
+    if (upKey.isDown || wKey.isDown) {
+        socket.emit(Constants.EventNames.OnUpKeyPressed, true);
+        //currentPlayer.sprite.position.y--;
+    }
+    else if (downKey.isDown || sKey.isDown) {
+        socket.emit(Constants.EventNames.OnDownKeyPressed, true);
+        //currentPlayer.sprite.position.y++;
+    }
+    
+    if (leftKey.isDown || aKey.isDown) {
+        socket.emit(Constants.EventNames.OnLeftKeyPressed, true);
+        //currentPlayer.sprite.position.x--;
+    }
+    else if (rightKey.isDown || dKey.isDown) {
+        socket.emit(Constants.EventNames.OnRightKeyPressed, true);
+        //currentPlayer.sprite.position.x++;
+    }
+    
+    if (shiftKey.isDown) {
+        socket.emit(Constants.EventNames.OnShiftKeyPressed, true);
+    }
+    
+    game.input.keyboard.onUpCallback = function (e) {
+        if (e.keyCode == Phaser.Keyboard.SHIFT) {
+            socket.emit(Constants.EventNames.OnShiftKeyPressed, false);
+        }
+    }
+}
+
+function triggerAttackAnimation(position) {
+    var maxSlashDistance = 20;
+    
+    var xDistance = (position.x - currentPlayer.position.x);
+    var yDistance = (position.y - currentPlayer.position.y);
+    
+    if (xDistance > maxSlashDistance) {
+        xDistance = maxSlashDistance;
+    } else if (xDistance < -maxSlashDistance) {
+        xDistance = -maxSlashDistance
+    }
+    
+    if (yDistance > maxSlashDistance) {
+        yDistance = maxSlashDistance;
+    } else if (yDistance < -maxSlashDistance) {
+        yDistance = -maxSlashDistance
+    }
+    
+    var animPosX = currentPlayer.weapon.position.x + xDistance;
+    var animPosY = currentPlayer.weapon.position.y + yDistance;
+    
+    var radius = 20;
+    var thereIsPlayer = false;
+    for (var id in playerList) {
+        var player = playerList[id];
+        //debugger;
+        if (player.position.x + radius / 2 > animPosX && player.position.x - radius / 2 < animPosX) {
+            if (player.position.y + radius / 2 > animPosY && player.position.y - radius / 2 < animPosY) {
+                particleBurst({ x: player.position.x, y: player.position.y });
+            }
+        }
+    };
+}
+
+function attack() {
+    var totalElapsedSeconds = game.time.now;
+    if (totalElapsedSeconds > nextAttack) {
+        nextAttack = totalElapsedSeconds + ClientCore.Constants.GamePlay.AttackRate;
+        socket.emit(Constants.EventNames.OnMouseClicked, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
+    }
+}
+
+var checkActions = function (socket) {
+    game.input.activePointer.leftButton.onDown.add(function () {
+        attack(socket);
+    }, this);
+};
+
+function particleBurst(pointer) {
+    
+    //  Position the emitter where the mouse/touch event was
+    emitter.x = pointer.x;
+    emitter.y = pointer.y;
+    
+    emitter.setScale(0.25, 0.001, 0.25, 0.001, 750, Phaser.Easing.Quintic.Out);
+    
+    //  The first parameter sets the effect to "explode" which means all particles are emitted at once
+    //  The second gives each particle a 2000ms lifespan
+    //  The third is ignored when using burst/explode mode
+    //  The final parameter (10) is how many particles will be emitted in this single burst
+    emitter.start(true, 500, null, 5);
+
+}
+
+//resizing utils
 function resizeGame() {
     game.scale.setGameSize($(window).width(), $(window).height());
 }

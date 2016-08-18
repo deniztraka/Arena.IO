@@ -32,6 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="public\js\client.js" />
+    <Compile Include="public\js\clientCore.js" />
     <Compile Include="server.js" />
     <Compile Include="server\core\serverConfig.js" />
     <Compile Include="server\shield.js" />
@@ -68,6 +69,7 @@
     <Folder Include="public\assets\particles\" />
     <Folder Include="public\assets\audio\effects\" />
     <Folder Include="public\assets\sprites\tiles\" />
+    <Folder Include="public\js\utils\" />
     <Folder Include="server\utils\" />
     <Folder Include="shared\" />
     <Folder Include="server\" />
