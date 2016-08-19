@@ -225,6 +225,7 @@ function clearRemovedBodies() {
             var body = bodyRemovalList[i];
             world.removeConstraint(body.weaponConstraint);
             world.removeConstraint(body.shieldConstraint);
+            world.removeConstraint(body.defendConstraint);
             world.removeBody(body.weapon);
             world.removeBody(body.shield);
             world.removeBody(body);

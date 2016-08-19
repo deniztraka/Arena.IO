@@ -54,6 +54,7 @@
     <Content Include="public\assets\sprites\paddle.png" />
     <Content Include="public\assets\sprites\red_ball.png" />
     <Content Include="public\assets\sprites\red_ballColored.png" />
+    <Content Include="public\assets\sprites\red_ball_hat.png" />
     <Content Include="public\assets\sprites\shield.png" />
     <Content Include="public\assets\sprites\tiles\dirt1.png" />
     <Content Include="public\assets\sprites\tiles\dirt2.jpg" />

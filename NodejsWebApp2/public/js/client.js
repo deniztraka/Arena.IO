@@ -38,6 +38,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
         game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
+        game.load.image('mushroomHat', '/public/assets/sprites/red_ball_hat.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
         game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
@@ -55,6 +56,8 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         
         tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
+        tempLocalPlayer.hat = game.add.sprite(0, 0, 'mushroomHat');
+        tempLocalPlayer.hat.anchor.setTo(0.5, 0.5);
         
         game.camera.follow(tempLocalPlayer.sprite);
         
@@ -185,6 +188,9 @@ var createSocketEvents = function () {
             var player = playerList[id];
             player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
             player.sprite.anchor.setTo(0.5, 0.5);
+            player.hat = game.add.sprite(player.position.x, player.position.y, 'mushroomHat');
+            player.hat.anchor.setTo(0.5, 0.5);
+            player.hat.tint = "0x" + player.color.replace('#', '');
             
             player.weapon = game.add.sprite(0, 0, 'paddle');
             player.weapon.anchor.setTo(0.5, 0.5);
@@ -217,9 +223,13 @@ var createSocketEvents = function () {
         currentPlayer = player;
         currentPlayer.sprite = tempLocalPlayer.sprite;
         currentPlayer.weapon = tempLocalPlayer.weapon;
-        currentPlayer.shield = tempLocalPlayer.shield;
+        currentPlayer.shield = tempLocalPlayer.shield;        
+        currentPlayer.hat = tempLocalPlayer.hat;
+
+        currentPlayer.hat.tint = "0x" + player.color.replace('#', '');
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         currentPlayer.shield.tint = "0x" + player.color.replace('#', '');
+
         myHealthBar = new HealthBar(game, {
             width: 100,
             height: 15,
@@ -298,11 +308,14 @@ var createSocketEvents = function () {
             
             if (player.sprite) {
                 player.sprite.rotation = data.rotation;
+                player.hat.rotation = data.rotation;
                 
                 if (player.sprite.position) {
                     //position update
                     player.sprite.position.x = data.x;
                     player.sprite.position.y = data.y;
+                    player.hat.position.x = data.x;
+                    player.hat.position.y = data.y;
                     
                     //nickname text position update
                     player.position.x = player.sprite.position.x;
@@ -356,7 +369,8 @@ function kill(player) {
         if (playerList[player.id].nicknameText) {
             playerList[player.id].nicknameText.destroy();
         }
-        
+
+        playerList[player.id].hat.destroy();
         playerList[player.id].weapon.destroy();
         playerList[player.id].shield.destroy();
         playerList[player.id].sprite.destroy();
