@@ -13,6 +13,8 @@ var tempLocalPlayer = {};
 var currentPlayer;
 var nextAttack = 0;
 var nextMousePositionSendTime = 0;
+var myHealthBar;
+var myStamBar;
 
 // *Keys
 var upKey;
@@ -59,6 +61,8 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
         tempLocalPlayer.shield = game.add.sprite(0, 0, 'shield');
         tempLocalPlayer.shield.anchor.setTo(0.5, 0.5);
+
+              
         
         upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
         downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
@@ -121,11 +125,11 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             game.debug.text("Online: " + onlineCount, 2, 30, "#666666");
             
             //Player Nickname Rendering
-            game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 35, currentPlayer.color);
+            game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 42, currentPlayer.color);
             
             //Player Health & Stamina Rendering
-            game.debug.text("Health : " + currentPlayer.health || '--', 2, $(window).height() - 5, currentPlayer.color);
-            game.debug.text("Stamina : " + currentPlayer.stamina || '--', 2, $(window).height() - 20, currentPlayer.color);
+            game.debug.text("         " + currentPlayer.health || '--', 5, $(window).height() - 25, '#666666');
+            game.debug.text("         " + currentPlayer.stamina || '--', 5, $(window).height() - 5, '#666666');
         }
         
         //Damage Dealt Score Table Rendering
@@ -198,6 +202,10 @@ var createSocketEvents = function () {
     socket.on(Constants.CommandNames.HealthStaminaUpdate, function (healthStaminaData) {
         for (var id in healthStaminaData) {
             
+            if (id == currentPlayer.id) {
+                myHealthBar.setPercent(healthStaminaData[id].health);
+                myStamBar.setPercent(healthStaminaData[id].stamina);
+            }
             playerList[id].health = healthStaminaData[id].health;
             playerList[id].stamina = healthStaminaData[id].stamina;
         }
@@ -210,6 +218,27 @@ var createSocketEvents = function () {
         currentPlayer.shield = tempLocalPlayer.shield;
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         currentPlayer.shield.tint = "0x" + player.color.replace('#', '');
+        myHealthBar = new HealthBar(game, {
+            width: 140,
+            height: 15,
+            x: 55,
+            y: $(window).height() - 30,            
+            bar: {
+                color: 'darkred'
+            },
+            isFixedToCamera: true
+        });
+        
+        myStamBar = new HealthBar(game, {
+            width: 140,
+            height: 15,
+            x: 55,
+            y: $(window).height() - 10,            
+            bar: {
+                color: 'blue'
+            },
+            isFixedToCamera: true
+        });
         
         //style.fill = '#000000';//currentPlayer.color;
         //currentPlayer.nicknameText = game.add.text(0, 0, player.nickname, style);
@@ -431,6 +460,7 @@ function particleBurst(pointer) {
 //resizing utils
 function resizeGame() {
     game.scale.setGameSize($(window).width(), $(window).height());
+    myHealthBar.setPosition(2, $(window).height()-5);
 }
 
 $(window).resize(function () {

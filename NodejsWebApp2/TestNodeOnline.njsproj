@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="public\js\client.js" />
     <Compile Include="public\js\clientCore.js" />
+    <Compile Include="public\js\utils\healthBar.standalone.js" />
     <Compile Include="server.js" />
     <Compile Include="server\core\serverConfig.js" />
     <Compile Include="server\shield.js" />
