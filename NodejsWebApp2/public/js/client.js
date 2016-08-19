@@ -26,6 +26,7 @@ var wKey;
 var aKey;
 var dKey;
 var sKey;
+var eKey;
 
 // *Phaser Props
 var style;
@@ -74,6 +75,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
         aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
         dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        eKey = game.input.keyboard.addKey(Phaser.Keyboard.E);
         
         //	Here we set-up our audio sprite
         fx = game.add.audio('sfx');
@@ -386,9 +388,22 @@ var checkMovement = function (socket) {
         socket.emit(Constants.EventNames.OnShiftKeyPressed, true);
     }
     
+    if (eKey.isDown) {
+        socket.emit(Constants.EventNames.OnEKeyPressed, true);
+        //currentPlayer.sprite.position.y--;
+    }
+    
     game.input.keyboard.onUpCallback = function (e) {
         if (e.keyCode == Phaser.Keyboard.SHIFT) {
             socket.emit(Constants.EventNames.OnShiftKeyPressed, false);
+        } else if (e.keyCode == Phaser.Keyboard.E) { 
+            socket.emit(Constants.EventNames.OnEKeyPressed, false);
+        }
+    }
+
+    game.input.keyboard.onDownCallback = function (e) {
+       if (e.keyCode == Phaser.Keyboard.E) {
+            socket.emit(Constants.EventNames.OnEKeyPressed, true);
         }
     }
 }

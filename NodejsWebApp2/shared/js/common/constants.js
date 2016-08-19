@@ -9,6 +9,7 @@
         OnLeftKeyPressed: "onLeftKeyPressed",
         OnRightKeyPressed: "onRightKeyPressed",
         OnShiftKeyPressed: "onShiftKeyPressed",
+        OnEKeyPressed: "onEKeyPressed",
         OnMouseClicked: "onMouseClicked"
     },
     CommandNames : {

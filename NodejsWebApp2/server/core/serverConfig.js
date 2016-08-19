@@ -13,6 +13,7 @@
         staminaIncreaseRate: 1,
         staminaDecreaseRateWhileRunning: 0.25,
         movementSpeed : 1,
+        defendSpeed : 0.5,
         runningSpeedMultiplier : 1.75
     }
 }

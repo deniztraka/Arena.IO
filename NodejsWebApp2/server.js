@@ -68,6 +68,9 @@ function attachEvents(socket, player) {
     socket.on(Constants.EventNames.OnShiftKeyPressed, function (isDown) {        
         onShiftKeyPressed(player,isDown);
     });
+    socket.on(Constants.EventNames.OnEKeyPressed, function (isDown) {
+        onEKeyPressed(player, isDown);
+    });
     socket.on(Constants.CommandNames.MousePosition, function (mousePos) {
         updateRotation(player, mousePos);
     });
@@ -135,6 +138,19 @@ var onShiftKeyPressed = function (player, isDown) {
     } else { 
         player.isRunning = false;
     }        
+};
+var onEKeyPressed = function (player, isDown) {    
+    if (isDown && !player.DefendMode) {
+        player.SetDefendMode(true);
+        world.removeConstraint(player.shieldConstraint);
+        world.addConstraint(player.defendConstraint);
+        player.speed = serverConfig.gamePlay.defendSpeed;     
+    } else if(!isDown){
+        player.SetDefendMode(false);
+        world.removeConstraint(player.defendConstraint);
+        world.addConstraint(player.shieldConstraint);
+        player.speed = serverConfig.gamePlay.movementSpeed;      
+    }
 };
 
 var updateRotation = function (player, mousePosition) {
@@ -261,11 +277,24 @@ function createPlayer(socket) {
     world.addBody(player.shield);
     world.addBody(player);
     
-    //This will lock weapon and shield to player
+    var oldShieldPosition = player.shield.position;
+    var oldShieldAngle = player.shield.angle;
+    
+    //This will lock weapon and shield to player    
     player.weaponConstraint = new p2.LockConstraint(player, player.weapon, { collideConnected: false });
     world.addConstraint(player.weaponConstraint);
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
+    
+    //Set defend constraint    
+    player.shield.position = [player.position[0] - 5, player.position[1] - 20];
+    player.shield.angle = 0;
+    player.defendConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
+    
+    //Add sheild constraint to world
+    player.shield.position = oldShieldPosition;
+    player.shield.angle = oldShieldAngle;    
     world.addConstraint(player.shieldConstraint);
+
     
     //assign damage dealt and killCount data of player
     damageDealtData[player.id] = 0;

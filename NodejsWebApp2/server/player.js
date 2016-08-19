@@ -23,6 +23,7 @@ var player = function (socket) {
     this.nextAttackTime = 0;
     this.bodyType = "human";
     this.speed = serverConfig.gamePlay.movementSpeed;
+    this.DefendMode = false;
     this.isRunning = false;
     p2.Body.call(this, {
         mass: 1,
@@ -36,7 +37,9 @@ var player = function (socket) {
     playerShape.collisionGroup = Math.pow(2, 0);
     playerShape.collisionMask = Math.pow(2, 0);
     this.addShape(playerShape);    
-
+    this.SetDefendMode = function (mode) { 
+        this.DefendMode = mode;
+    }
     this.clientInfo = {
         id: this.id,
         sessionId: this.client.sessionId,
