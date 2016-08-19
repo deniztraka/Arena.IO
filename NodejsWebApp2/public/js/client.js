@@ -128,8 +128,8 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 42, currentPlayer.color);
             
             //Player Health & Stamina Rendering
-            game.debug.text("         " + currentPlayer.health || '--', 5, $(window).height() - 25, '#666666');
-            game.debug.text("         " + currentPlayer.stamina || '--', 5, $(window).height() - 5, '#666666');
+            game.debug.text("       " + currentPlayer.health || '--', 5, $(window).height() - 25, '#666666');
+            game.debug.text("       " + currentPlayer.stamina || '--', 5, $(window).height() - 5, '#666666');
         }
         
         //Damage Dealt Score Table Rendering
@@ -219,7 +219,7 @@ var createSocketEvents = function () {
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
         currentPlayer.shield.tint = "0x" + player.color.replace('#', '');
         myHealthBar = new HealthBar(game, {
-            width: 140,
+            width: 100,
             height: 15,
             x: 55,
             y: $(window).height() - 30,            
@@ -230,7 +230,7 @@ var createSocketEvents = function () {
         });
         
         myStamBar = new HealthBar(game, {
-            width: 140,
+            width: 100,
             height: 15,
             x: 55,
             y: $(window).height() - 10,            
