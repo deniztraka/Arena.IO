@@ -210,8 +210,7 @@ var createSocketEvents = function () {
         };
     });
 
-    socket.on(Constants.CommandNames.CurrentBonusListInfo, function (bonuses) {
-        debugger;        
+    socket.on(Constants.CommandNames.CurrentBonusListInfo, function (bonuses) {             
         for (var id in bonuses) {
             var bonusInfo = bonuses[id];
             var bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'bonus');
@@ -219,8 +218,7 @@ var createSocketEvents = function () {
             bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
             game.physics.enable(bonus, Phaser.Physics.ARCADE);
             bonus.body.angularVelocity = 200;
-            bonusList[bonusInfo.id] = bonus;
-            console.log(bonusInfo.type + " craeted at position x:" + bonusInfo.position.x + " y:" + bonusInfo.position.y);
+            bonusList[bonusInfo.id] = bonus;            
         };
     });
     
@@ -378,12 +376,10 @@ var createSocketEvents = function () {
         bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
         game.physics.enable(bonus, Phaser.Physics.ARCADE);
         bonus.body.angularVelocity = 200;
-        bonusList[bonusInfo.id] = bonus;
-        console.log(bonusInfo.type + " craeted at position x:" + bonusInfo.position.x + " y:" +  bonusInfo.position.y);
+        bonusList[bonusInfo.id] = bonus;        
     });
 
-    socket.on(Constants.CommandNames.RemoveBonus, function (bonusInfo) {
-        console.log("remove bonus");
+    socket.on(Constants.CommandNames.RemoveBonus, function (bonusInfo) {        
         killBonus(bonusInfo);
     });
     

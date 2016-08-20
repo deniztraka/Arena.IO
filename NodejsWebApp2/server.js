@@ -379,9 +379,7 @@ function createRandomBonuses() {
             addBonusToWorld(new Bonus(bonusType));
             logger.log(bonusType + " bonus is created");
             logger.log("active bonus list:" + activeBonusList.length);
-        } else {
-            console.log("another time");
-        }
+        } 
     }
 }
 
