@@ -37,8 +37,8 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
-        game.load.image('mushroom', '/public/assets/sprites/red_ball.png');
-        game.load.image('mushroomHat', '/public/assets/sprites/red_ball_hat.png');
+        game.load.image('player', '/public/assets/sprites/player.png');
+        game.load.image('playerHat', '/public/assets/sprites/player_hat.png');
         game.load.image('paddle', '/public/assets/sprites/paddle.png');
         game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
@@ -54,9 +54,9 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');
         
-        tempLocalPlayer.sprite = game.add.sprite(0, 0, 'mushroom');
+        tempLocalPlayer.sprite = game.add.sprite(0, 0, 'player');
         tempLocalPlayer.sprite.anchor.setTo(0.5, 0.5);
-        tempLocalPlayer.hat = game.add.sprite(0, 0, 'mushroomHat');
+        tempLocalPlayer.hat = game.add.sprite(0, 0, 'playerHat');
         tempLocalPlayer.hat.anchor.setTo(0.5, 0.5);
         
         game.camera.follow(tempLocalPlayer.sprite);
@@ -186,9 +186,9 @@ var createSocketEvents = function () {
         playerList = players;
         for (var id in playerList) {
             var player = playerList[id];
-            player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
+            player.sprite = game.add.sprite(player.position.x, player.position.y, 'player');
             player.sprite.anchor.setTo(0.5, 0.5);
-            player.hat = game.add.sprite(player.position.x, player.position.y, 'mushroomHat');
+            player.hat = game.add.sprite(player.position.x, player.position.y, 'playerHat');
             player.hat.anchor.setTo(0.5, 0.5);
             player.hat.tint = "0x" + player.color.replace('#', '');
             
@@ -261,8 +261,11 @@ var createSocketEvents = function () {
     });
     
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
-        player.sprite = game.add.sprite(player.position.x, player.position.y, 'mushroom');
+        player.sprite = game.add.sprite(player.position.x, player.position.y, 'player');
         player.sprite.anchor.setTo(0.5, 0.5);
+        player.hat = game.add.sprite(player.position.x, player.position.y, 'playerHat');
+        player.hat.anchor.setTo(0.5, 0.5);
+        player.hat.tint = "0x" + player.color.replace('#', '');
         player.weapon = game.add.sprite(0, 0, 'paddle');
         player.weapon.anchor.setTo(0.5, 0.5);
         player.weapon.tint = "0x" + player.color.replace('#', '');
