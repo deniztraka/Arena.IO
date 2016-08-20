@@ -35,6 +35,7 @@
     <Compile Include="public\js\clientCore.js" />
     <Compile Include="public\js\utils\healthBar.standalone.js" />
     <Compile Include="server.js" />
+    <Compile Include="server\bonus.js" />
     <Compile Include="server\core\serverConfig.js" />
     <Compile Include="server\shield.js" />
     <Compile Include="server\utils\logger.js" />

@@ -5,6 +5,7 @@ var totalGameTimeInSeconds = 0;
 var socket;
 
 var playerList = {};
+var bonusList = {};
 var damageDealtList = [];
 var killCountList = [];
 
@@ -43,14 +44,16 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
+        game.load.image('bonus', '/public/assets/sprites/red_ball.png');
         game.load.audio('sfx', '/public/assets/audio/effects/fx_mixdown.ogg');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
     create: function () {
         game.world.setBounds(0, 0, 1920, 1920);
-        
-        tilesprite = game.add.tileSprite(0, 0, game.world.bounds.width, game.world.bounds.height, 'grass');
         game.physics.startSystem(Phaser.Physics.ARCADE);
+        tilesprite = game.add.tileSprite(0, 0, game.world.bounds.width, game.world.bounds.height, 'grass');
+        
+       
         emitter = game.add.emitter(0, 0, 100);
         emitter.makeParticles('glassParticle');
         
@@ -206,6 +209,20 @@ var createSocketEvents = function () {
             //console.log("this should be already logged in player" + player.id);
         };
     });
+
+    socket.on(Constants.CommandNames.CurrentBonusListInfo, function (bonuses) {
+        debugger;        
+        for (var id in bonuses) {
+            var bonusInfo = bonuses[id];
+            var bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'bonus');
+            bonus.anchor.setTo(0.5, 0.5);
+            bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
+            game.physics.enable(bonus, Phaser.Physics.ARCADE);
+            bonus.body.angularVelocity = 200;
+            bonusList[bonusInfo.id] = bonus;
+            console.log(bonusInfo.type + " craeted at position x:" + bonusInfo.position.x + " y:" + bonusInfo.position.y);
+        };
+    });
     
     socket.on(Constants.CommandNames.HealthStaminaUpdate, function (healthStaminaData) {
         for (var id in healthStaminaData) {
@@ -332,8 +349,7 @@ var createSocketEvents = function () {
             }
         }
     });
-    
-    
+        
     socket.on(Constants.CommandNames.DamageDealtUpdate, function (pDamageDealtData) {
         damageDealtList = [];
         for (var key in pDamageDealtData) {
@@ -354,6 +370,21 @@ var createSocketEvents = function () {
         killCountList.sort(function (a, b) {
             return b.killCount - a.killCount;
         });
+    });
+
+    socket.on(Constants.CommandNames.CreateBonus, function (bonusInfo) {
+        var bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'bonus');
+        bonus.anchor.setTo(0.5, 0.5);
+        bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
+        game.physics.enable(bonus, Phaser.Physics.ARCADE);
+        bonus.body.angularVelocity = 200;
+        bonusList[bonusInfo.id] = bonus;
+        console.log(bonusInfo.type + " craeted at position x:" + bonusInfo.position.x + " y:" +  bonusInfo.position.y);
+    });
+
+    socket.on(Constants.CommandNames.RemoveBonus, function (bonusInfo) {
+        console.log("remove bonus");
+        killBonus(bonusInfo);
     });
     
     socket.on("animAttack", function (animPos) {
@@ -379,6 +410,14 @@ function kill(player) {
         playerList[player.id].sprite.destroy();
         
         delete playerList[player.id];
+    }
+}
+
+function killBonus(bonus) {
+    if (bonusList[bonus.id]) {
+        bonusList[bonus.id].destroy();
+
+        delete bonusList[bonus.id];
     }
 }
 

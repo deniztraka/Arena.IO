@@ -1,9 +1,9 @@
 ﻿Constants = {
-    EventNames : {
-        Connection : "connection",
-        OnPlayerDisconnect : "disconnect",
-        Connect : "connect",
-        OnUpdateRotation : "onUpdateRotation",
+    EventNames: {
+        Connection: "connection",
+        OnPlayerDisconnect: "disconnect",
+        Connect: "connect",
+        OnUpdateRotation: "onUpdateRotation",
         OnUpKeyPressed: "onUpKeyPressed",
         OnDownKeyPressed: "onDownKeyPressed",
         OnLeftKeyPressed: "onLeftKeyPressed",
@@ -12,18 +12,21 @@
         OnEKeyPressed: "onEKeyPressed",
         OnMouseClicked: "onMouseClicked"
     },
-    CommandNames : {
-        NewLoginInfo : "newLoginInfo",
-        DisconnectedPlayerInfo : "disconnectedPlayerInfo",
-        PlayerInfo : "playerInfo",
-        AlreadyLoggedInPlayerList : "alreadyLoggedInPlayerList",
+    CommandNames: {
+        NewLoginInfo: "newLoginInfo",
+        DisconnectedPlayerInfo: "disconnectedPlayerInfo",
+        PlayerInfo: "playerInfo",
+        AlreadyLoggedInPlayerList: "alreadyLoggedInPlayerList",
         PlayerPosRotUpdate: "playerPosRotUpdate",
-        MousePosition : "mousePosition",
-        Killed : "killed",
-        DamageDealtUpdate : "damageDealtUpdate",
-        KillCountUpdate : "killCountUpdate",
+        MousePosition: "mousePosition",
+        Killed: "killed",
+        DamageDealtUpdate: "damageDealtUpdate",
+        KillCountUpdate: "killCountUpdate",
         DamageGiven: "damageGiven",
-        HealthStaminaUpdate: "healthStaminaUpdate"
+        HealthStaminaUpdate: "healthStaminaUpdate",
+        CreateBonus: "createBonus",
+        RemoveBonus: "removeBonus",
+        CurrentBonusListInfo: "currentBonusListInfo"
     }
 };
 
