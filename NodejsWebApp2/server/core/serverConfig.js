@@ -20,7 +20,7 @@
         movementSpeed : 1,
         defendSpeed : 0.5,
         runningSpeedMultiplier: 1.75,
-        maxActiveBonusCount: 1000,
+        maxActiveBonusCount: 10,
         bonusTypes: ["health","stamina"]
     }
 }

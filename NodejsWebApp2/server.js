@@ -372,7 +372,7 @@ function utilizeStaminaIncrease() {
 }
 function createRandomBonuses() {
     if (activeBonusList.length < serverConfig.gamePlay.maxActiveBonusCount) {
-        if (utils.random(0, 10) < 1) {
+        if (utils.random(0, 100) < 1) {
             //get random bonus type
             var bonusType = serverConfig.gamePlay.bonusTypes[utils.randomInt(0, serverConfig.gamePlay.bonusTypes.length)];
             //add to world
