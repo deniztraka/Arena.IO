@@ -44,7 +44,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.load.image('shield', '/public/assets/sprites/shield.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
-        game.load.image('bonus', '/public/assets/sprites/red_ball.png');
+        game.load.image('bonus', '/public/assets/sprites/bonus.png');
         game.load.audio('sfx', '/public/assets/audio/effects/fx_mixdown.ogg');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },

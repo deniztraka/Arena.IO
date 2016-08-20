@@ -5,7 +5,7 @@ var bonus = function (type) {
         if (pBonusType == "health") {
             return "#ff0000";//red
         } else if (pBonusType == "stamina") {
-            return "#0000ff";//blue
+            return "#00aaff";//blue
         }
     }
 
