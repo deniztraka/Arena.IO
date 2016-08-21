@@ -1,12 +1,12 @@
 ﻿var p2 = require('p2');
 var shield = function (socket, playerPosition, playerId) {
-    var shieldLength = 10 * 2.5;
+    var shieldLength = 15 * 2;
     var shieldHeight = shieldLength * 0.25;
 
     this.playerId = playerId;    
     p2.Body.call(this, {
         mass : 0.0001,
-        position : [playerPosition[0] -13, playerPosition[1]],
+        position : [playerPosition[0] - 20, playerPosition[1]],
         angle : -1.5707963268  
     });    
     this.isBodyAlive = false;

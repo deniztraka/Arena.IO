@@ -343,7 +343,7 @@ function createPlayer(socket) {
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
 
     //Set defend constraint    
-    player.shield.position = [player.position[0] - 5, player.position[1] - 20];
+    player.shield.position = [player.position[0] - 3, player.position[1] - 23];
     player.shield.angle = 0;
     player.defendConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
 

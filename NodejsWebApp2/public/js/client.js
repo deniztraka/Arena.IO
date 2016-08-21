@@ -38,10 +38,10 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
     preload: function () {
         game.time.advancedTiming = true;
         //game.load.bitmapFont('carrier_command', '/public/assets/fonts/bitmap/nokia16.png', '/public/assets/fonts/bitmap/nokia16.xml');
-        game.load.image('player', '/public/assets/sprites/player.png');
-        game.load.image('playerHat', '/public/assets/sprites/player_hat.png');
-        game.load.image('paddle', '/public/assets/sprites/paddle.png');
-        game.load.image('shield', '/public/assets/sprites/shield.png');
+        game.load.image('player', '/public/assets/sprites/playerBigE.png');
+        game.load.image('playerHat', '/public/assets/sprites/bigHat.png');
+        game.load.image('paddle', '/public/assets/sprites/paddleBig.png');
+        game.load.image('shield', '/public/assets/sprites/shieldBig.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
         game.load.image('bonus', '/public/assets/sprites/bonus.png');

@@ -33,7 +33,7 @@ var player = function (socket) {
     this.damping = 1;
     this.isBodyAlive = true;
 
-    var playerShape = new p2.Circle({ radius: 10 });
+    var playerShape = new p2.Circle({ radius: 15 });
     playerShape.collisionGroup = Math.pow(2, 0);
     playerShape.collisionMask = Math.pow(2, 0);
     this.addShape(playerShape);    

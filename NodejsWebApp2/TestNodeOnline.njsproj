@@ -58,6 +58,7 @@
     <Content Include="public\assets\sprites\paddleBig.png" />
     <Content Include="public\assets\sprites\player.png" />
     <Content Include="public\assets\sprites\playerBig.png" />
+    <Content Include="public\assets\sprites\playerBigE.png" />
     <Content Include="public\assets\sprites\player_hat.png" />
     <Content Include="public\assets\sprites\shield.png" />
     <Content Include="public\assets\sprites\shieldBig.png" />
