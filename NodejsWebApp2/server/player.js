@@ -1,6 +1,9 @@
 ﻿var serverConfig = require('./core/serverConfig.js');
+var utils = require('./utils/utils.js');
+var colorGenerator = require('randomcolor');
 var p2 = require('p2');
 var player = function (socket) {
+    var randomColors = colorGenerator.randomColor({ luminosity: 'bright', count: 100 });
     function getWeaponInfo() {
         if (this.weapon) { 
             return this.weapon.clientInfo;
@@ -11,13 +14,13 @@ var player = function (socket) {
         if (this.shield) {
             return this.shield.clientInfo;
         }
-    }
+    } 
     
     this.socket = socket;
     this.id = Math.floor(100 * Math.random());
     this.nickname = socket.handshake.query["nickname"];
-    this.client = { sessionId : socket.id };
-    this.color = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
+    this.client = { sessionId: socket.id };
+    this.color = randomColors[utils.randomInt(0, randomColors.length)];//'#' + (0xfffffff + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
     this.health = 100;
     this.stamina = 100;
     this.nextAttackTime = 0;
