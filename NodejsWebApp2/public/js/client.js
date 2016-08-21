@@ -45,6 +45,9 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
         game.load.image('grass', '/public/assets/sprites/tiles/grass1.png');
         game.load.image('bonus', '/public/assets/sprites/bonus.png');
+        game.load.image('healthPot', '/public/assets/sprites/items/potions/healthPotion.png');
+        game.load.image('stamPot', '/public/assets/sprites/items/potions/staminaPotion.png');
+        game.load.image('bonus', '/public/assets/sprites/bonus.png');
         game.load.audio('sfx', '/public/assets/audio/effects/fx_mixdown.ogg');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
@@ -213,11 +216,16 @@ var createSocketEvents = function () {
     socket.on(Constants.CommandNames.CurrentBonusListInfo, function (bonuses) {             
         for (var id in bonuses) {
             var bonusInfo = bonuses[id];
-            var bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'bonus');
+            var bonus = null;
+            if (bonusInfo.type == "health") {
+                bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'healthPot');
+            } else if (bonusInfo.type == "stamina") {
+                bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'stamPot');
+            }
             bonus.anchor.setTo(0.5, 0.5);
-            bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
+            //bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
             game.physics.enable(bonus, Phaser.Physics.ARCADE);
-            bonus.body.angularVelocity = 200;
+            bonus.body.angularVelocity = 100;
             bonusList[bonusInfo.id] = bonus;            
         };
     });
@@ -371,11 +379,16 @@ var createSocketEvents = function () {
     });
 
     socket.on(Constants.CommandNames.CreateBonus, function (bonusInfo) {
-        var bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'bonus');
+        var bonus = null;
+        if (bonusInfo.type == "health") {
+            bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'healthPot');
+        } else if (bonusInfo.type == "stamina") {
+            bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'stamPot');
+        }
         bonus.anchor.setTo(0.5, 0.5);
-        bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
+        //bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
         game.physics.enable(bonus, Phaser.Physics.ARCADE);
-        bonus.body.angularVelocity = 200;
+        bonus.body.angularVelocity = 100;
         bonusList[bonusInfo.id] = bonus;        
     });
 
