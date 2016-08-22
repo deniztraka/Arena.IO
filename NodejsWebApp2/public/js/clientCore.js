@@ -6,7 +6,7 @@
 
 ClientCore.Constants = (function (my, parent) {
     my.GamePlay = {
-        AttackRate : 1 / 4 * 1000
+        AttackRate : 1 / 2 * 1000
     };
     
     my.Server = {

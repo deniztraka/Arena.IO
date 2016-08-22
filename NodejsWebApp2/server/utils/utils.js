@@ -1,4 +1,11 @@
-﻿var serverConfig = require('../core/serverConfig.js');
+﻿Object.size = function (obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+var serverConfig = require('../core/serverConfig.js');
 module.exports = {
     getDateTimeText: function () {
         var date = new Date();

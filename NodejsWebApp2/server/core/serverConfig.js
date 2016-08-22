@@ -13,7 +13,7 @@
             width: 1920,
             height:1920
         },
-        slashRate: 0.25,
+        slashRate: 0.5,
         staminaIncreaseFrequencyFromSeconds: 1,
         staminaIncreaseRate: 1,
         staminaDecreaseRateWhileRunning: 0.25,

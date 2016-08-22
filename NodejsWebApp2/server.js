@@ -242,7 +242,13 @@ world.on('beginContact', function (evt) {
 
 // core game functions
 var processWorld = function (deltaTime) {
-    world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
+    try {
+        world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
+    } catch (e) {
+        logger.log("Error occurred at world.step(). message: " + e);
+    };
+
+    
     clearRemovedBodies();
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);
@@ -273,9 +279,8 @@ function clearRemovedBodies() {
                 if (bonusIndex > -1) {
                     activeBonusList.splice(bonusIndex, 1);
                     world.removeBody(body);
-                    io.emit(Constants.CommandNames.RemoveBonus, body.clientInfo);//sending bonusbody.clientInfo to all players for removing
-                    logger.log(body.bonusType + " bonus is removed");
-                    logger.log("active bonus list:" + activeBonusList.length);    
+                    io.emit(Constants.CommandNames.RemoveBonus, body.clientInfo);//sending bonusbody.clientInfo to all players for removing                    
+                    logger.log(body.bonusType + " bonus is removed at x:" + body.position[0] + " y:" + body.position[1] + " | total:" + activeBonusList.length);                        
                 }
             }            
         }
@@ -321,7 +326,7 @@ function attack(player, mousePosition) {
 function processSlash(player, mousePosition) {
     world.removeConstraint(player.weaponConstraint);
     player.weapon.applyForceLocal([player.weapon.mass * 20000, 0]);
-    utils.executeAfterSeconds(0.1, function () {
+    utils.executeAfterSeconds(0.175, function () {
         world.addConstraint(player.weaponConstraint)
     });
 };
@@ -371,14 +376,20 @@ function utilizeStaminaIncrease() {
     }
 }
 function createRandomBonuses() {
-    if (activeBonusList.length < serverConfig.gamePlay.maxActiveBonusCount) {
-        if (utils.random(0, 100) < 1) {
+    var onlineCount = Object.size(getClientPlayerList());
+    var maxRand = onlineCount * 2;
+    var maxActiveBonusCount = maxRand;
+    var chance = maxActiveBonusCount * 0.02;
+    if (activeBonusList.length <= maxActiveBonusCount) {
+        var chosenRandom = utils.random(0, maxRand);        
+        //logger.log("online:" + onlineCount  + " | " + random + " < " + chance);
+        if (chosenRandom < chance) {
             //get random bonus type
             var bonusType = serverConfig.gamePlay.bonusTypes[utils.randomInt(0, serverConfig.gamePlay.bonusTypes.length)];
             //add to world
-            addBonusToWorld(new Bonus(bonusType));
-            logger.log(bonusType + " bonus is created");
-            logger.log("active bonus list:" + activeBonusList.length);
+            var bonus = new Bonus(bonusType);
+            addBonusToWorld(bonus);
+            logger.log(bonusType + " bonus is created at x:" + bonus.position[0] + " y:" + bonus.position[1] + " | total:" + activeBonusList.length);            
         } 
     }
 }
