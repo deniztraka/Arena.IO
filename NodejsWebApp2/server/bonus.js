@@ -25,7 +25,7 @@ var bonus = function (type) {
 
     this.setEffect = function(playerBody){
         if (this.bonusType == "health") {            
-            playerBody.health += 20;
+            playerBody.health += 40;
             if (playerBody.health > 100) {
                 playerBody.health = 100;
             }

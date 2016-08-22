@@ -109,7 +109,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.scale.pageAlignVertically = true;
         // using RESIZE scale mode
         game.scale.scaleMode = Phaser.ScaleManager.SHOWALL;
-        
+        game.scale.updateLayout();
         
         createSocketEvents();
     },
@@ -136,7 +136,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             game.debug.text("Online: " + onlineCount, 2, 30, "#666666");
             
             //Player Nickname Rendering
-            game.debug.text(currentPlayer.nickname || '--', 2, $(window).height() - 42, currentPlayer.color);
+            game.debug.text(currentPlayer.nickname || '--', 4, $(window).height() - 42, currentPlayer.color);
             
             //Player Health & Stamina Rendering
             game.debug.text("       " + currentPlayer.health || '--', 5, $(window).height() - 25, '#666666');
@@ -257,7 +257,10 @@ var createSocketEvents = function () {
             width: 100,
             height: 15,
             x: 55,
-            y: $(window).height() - 30,            
+            y: $(window).height() - 30,
+            bg: {
+                color:"#000000"
+            },        
             bar: {
                 color: 'darkred'
             },
@@ -268,7 +271,10 @@ var createSocketEvents = function () {
             width: 100,
             height: 15,
             x: 55,
-            y: $(window).height() - 10,            
+            y: $(window).height() - 10,   
+            bg: {
+                color: "#000000"
+            },          
             bar: {
                 color: 'blue'
             },
@@ -539,8 +545,13 @@ function particleBurst(pointer) {
 
 //resizing utils
 function resizeGame() {
-    game.scale.setGameSize($(window).width(), $(window).height());
-    myHealthBar.setPosition(2, $(window).height()-5);
+    game.scale.setGameSize($(window).width(), $(window).height());    
+    myHealthBar.setFixedToCamera(false);    
+    myHealthBar.setPosition(55, $(window).height()-30);    
+    myHealthBar.setFixedToCamera(true);
+    myStamBar.setFixedToCamera(false);
+    myStamBar.setPosition(55, $(window).height() - 10);
+    myStamBar.setFixedToCamera(true);
 }
 
 $(window).resize(function () {
