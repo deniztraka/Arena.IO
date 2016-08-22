@@ -278,7 +278,7 @@ var createSocketEvents = function () {
             x: 55,
             y: $(window).height() - 30,
             bg: {
-                color: "rgba(0, 0, 0, .2)",
+                color: "#000000",
                 alpha:0.6
             },        
             bar: {
