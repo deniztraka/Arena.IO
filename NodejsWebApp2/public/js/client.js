@@ -210,6 +210,21 @@ var createSocketEvents = function () {
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
             //console.log("this should be already logged in player" + player.id);
+
+            player.healthBar = new HealthBar(game, {
+                width: 35,
+                height: 4,
+                x: player.position.x,
+                y: player.position.y,
+                bg: {
+                    color: "#000000",             
+                    alpha:0.7
+                },        
+                bar: {
+                    color: 'darkred'
+                },
+                isFixedToCamera: false
+            });
         };
     });
 
@@ -237,8 +252,12 @@ var createSocketEvents = function () {
                 myHealthBar.setPercent(healthStaminaData[id].health);
                 myStamBar.setPercent(healthStaminaData[id].stamina);
             }
+           
             playerList[id].health = healthStaminaData[id].health;
             playerList[id].stamina = healthStaminaData[id].stamina;
+            if (playerList[id].healthBar) { 
+                playerList[id].healthBar.setPercent(healthStaminaData[id].health);
+            }
         }
     });
     
@@ -259,7 +278,8 @@ var createSocketEvents = function () {
             x: 55,
             y: $(window).height() - 30,
             bg: {
-                color:"#000000"
+                color: "rgba(0, 0, 0, .2)",
+                alpha:0.6
             },        
             bar: {
                 color: 'darkred'
@@ -273,7 +293,8 @@ var createSocketEvents = function () {
             x: 55,
             y: $(window).height() - 10,   
             bg: {
-                color: "#000000"
+                color: "#000000",               
+                alpha:0.6
             },          
             bar: {
                 color: 'blue'
@@ -306,6 +327,21 @@ var createSocketEvents = function () {
         //style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
+        
+        player.healthBar = new HealthBar(game, {
+            width: 35,
+            height: 4,
+            x: player.position.x,
+            y: player.position.y,
+            bg: {
+                color: "#000000",                         
+                alpha:0.6
+            },        
+            bar: {
+                color: 'darkred'
+            },
+            isFixedToCamera: false
+        });
         playerList[player.id] = player;
         //console.log("this should be new comer and its id is " + player.id + " nickname is " + player.nickname);
     });
@@ -325,6 +361,10 @@ var createSocketEvents = function () {
         for (var id in playersData) {
             var data = playersData[id];
             var player = playerList[id];
+            
+            if (player.healthBar) { 
+                player.healthBar.setPosition(data.x,data.y-30);
+            }
             
             if (player.weapon) {
                 player.weapon.position.x = data.weapon.x;
@@ -355,7 +395,7 @@ var createSocketEvents = function () {
                     
                     if (player.nicknameText) {
                         player.nicknameText.x = Math.floor(player.position.x);
-                        player.nicknameText.y = Math.floor(player.position.y - player.sprite.height * 0.75);
+                        player.nicknameText.y = Math.floor(player.position.y - 37);
                     }
                 }
             }
@@ -423,7 +463,7 @@ function kill(player) {
         playerList[player.id].weapon.destroy();
         playerList[player.id].shield.destroy();
         playerList[player.id].sprite.destroy();
-        
+        playerList[player.id].healthBar.kill();
         delete playerList[player.id];
     }
 }

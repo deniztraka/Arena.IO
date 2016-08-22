@@ -70,6 +70,7 @@ function mergeObjetcs(targetObj, newObj) {
 HealthBar.prototype.drawBackground = function () {
     
     var bmd = this.game.add.bitmapData(this.config.width, this.config.height);
+    bmd.ctx.globalAlpha = this.config.bg.alpha;   
     bmd.ctx.fillStyle = this.config.bg.color;
     bmd.ctx.beginPath();
     bmd.ctx.rect(0, 0, this.config.width, this.config.height);
@@ -84,7 +85,7 @@ HealthBar.prototype.drawBackground = function () {
 };
 
 HealthBar.prototype.drawHealthBar = function () {
-    var bmd = this.game.add.bitmapData(this.config.width, this.config.height);
+    var bmd = this.game.add.bitmapData(this.config.width, this.config.height);    
     bmd.ctx.fillStyle = this.config.bar.color;
     bmd.ctx.beginPath();
     bmd.ctx.rect(0, 0, this.config.width, this.config.height);
