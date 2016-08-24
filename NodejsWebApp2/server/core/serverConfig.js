@@ -5,6 +5,7 @@
         gameTimeUpdateFrequencyFromSeconds : 1,
         healthStaminaUpdateFrequencyFromSeconds : 1 / 10,
         positionAndRotationUpdateFrequencyFromSeconds : 1 / 30,
+        clicnetGameMechanicsUpdateFrequencyFromSeconds : 1/10,
         scoreUpdateFrequencyFromSeconds: 1,
         randomBonusGenerationProcess : 1        
     },

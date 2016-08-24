@@ -55,7 +55,9 @@ var player = function (socket) {
         stamina: this.stamina,
         nickname: this.nickname,
         weapon : getWeaponInfo(),
-        shield : getShieldInfo()
+        shield : getShieldInfo(),
+        isRunning: this.isRunning,
+        onDefendMode:this.DefendMode
     };
 };
 

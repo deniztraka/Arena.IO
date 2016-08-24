@@ -26,7 +26,8 @@
         HealthStaminaUpdate: "healthStaminaUpdate",
         CreateBonus: "createBonus",
         RemoveBonus: "removeBonus",
-        CurrentBonusListInfo: "currentBonusListInfo"
+        CurrentBonusListInfo: "currentBonusListInfo",
+        GameMechanicsDataUpdate : "gameMechanicsDataUpdate"
     }
 };
 

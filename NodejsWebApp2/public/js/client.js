@@ -43,11 +43,11 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         game.load.image('paddle', '/public/assets/sprites/paddleBig.png');
         game.load.image('shield', '/public/assets/sprites/shieldBig.png');
         game.load.image('glassParticle', '/public/assets/particles/glass.png');
+        game.load.image('smokeParticle', '/public/assets/particles/smoke-puff.png');
         game.load.image('grass', '/public/assets/sprites/tiles/dirt6.png');
         game.load.image('bonus', '/public/assets/sprites/bonus.png');
         game.load.image('healthPot', '/public/assets/sprites/items/potions/healthPotion.png');
-        game.load.image('stamPot', '/public/assets/sprites/items/potions/staminaPotion.png');
-        game.load.image('bonus', '/public/assets/sprites/bonus.png');
+        game.load.image('stamPot', '/public/assets/sprites/items/potions/staminaPotion.png');        
         game.load.audio('sfx', '/public/assets/audio/effects/fx_mixdown.ogg');
         style = { font: "10px Arial", fill: "#cccccc", wordWrap: true, wordWrapWidth: 80, align: "center" };
     },
@@ -71,6 +71,9 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
         tempLocalPlayer.weapon.anchor.setTo(0.5, 0.5);
         tempLocalPlayer.shield = game.add.sprite(0, 0, 'shield');
         tempLocalPlayer.shield.anchor.setTo(0.5, 0.5);
+        
+        tempLocalPlayer.smokeEmitter = game.add.emitter(0, 500, 400);
+        tempLocalPlayer.smokeEmitter.makeParticles('smokeParticle');
 
               
         
@@ -120,9 +123,18 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             if (totalElapsedSeconds > nextMousePositionSendTime) {
                 nextMousePositionSendTime = totalElapsedSeconds + ClientCore.Constants.Server.MousePositionSendRate;
                 socket.emit(Constants.CommandNames.MousePosition, { x: game.input.mousePointer.worldX, y: game.input.mousePointer.worldY });
-            }            
+            }
         }
         
+        //Handle running smoke for other players
+        for (var key in playerList) {
+            //console.log(totalElapsedSeconds + " player " + playerList[key].nickname + "is running:" + playerList[key].isRunning);
+            if (playerList[key].isRunning == true) { 
+                //console.log("player " + playerList[key].nickname + "is running");
+                burstSmoke(playerList[key]);
+            }
+        }
+
         checkMovement(socket);
         checkActions(socket);
         //gameTimeText.text = "Alive Time: " + buildGameTimeText(totalGameTimeInSeconds);
@@ -170,7 +182,7 @@ var game = new Phaser.Game("100%", "100%", Phaser.CANVAS, 'test multi game', {
             var killShowCount = 0;
             for (var i = 0; i < killCountList.length; i++) {
                 if (killShowCount < maxKillScoreShowCount) {
-                    game.debug.text(playerList[killCountList[i].id].nickname + " : " + killCountList[i].killCount, 2, yValue, playerList[killCountList[i].id].color);
+                    game.debug.text(playerList[killCountList[i].id].nickname + " : " + killCountList[i].killCount, 2, yValue, playerList[killCountList[i].id].color);                    
                     killShowCount++;
                     yValue += 13;
                 } else {
@@ -192,6 +204,8 @@ var createSocketEvents = function () {
         playerList = players;
         for (var id in playerList) {
             var player = playerList[id];
+            player.isRunning = false;
+            player.onDefendMode = false;
             player.sprite = game.add.sprite(player.position.x, player.position.y, 'player');
             player.sprite.anchor.setTo(0.5, 0.5);
             player.hat = game.add.sprite(player.position.x, player.position.y, 'playerHat');
@@ -210,6 +224,9 @@ var createSocketEvents = function () {
             player.nicknameText = game.add.text(0, 0, player.nickname, style);
             player.nicknameText.anchor.set(0.5);
             //console.log("this should be already logged in player" + player.id);
+            
+            player.smokeEmitter = game.add.emitter(0, 500, 400);
+            player.smokeEmitter.makeParticles('smokeParticle');
 
             player.healthBar = new HealthBar(game, {
                 width: 35,
@@ -263,10 +280,13 @@ var createSocketEvents = function () {
     
     socket.on(Constants.CommandNames.PlayerInfo, function (player) {
         currentPlayer = player;
+        currentPlayer.isRunning = false;
+        currentPlayer.onDefendMode = false;
         currentPlayer.sprite = tempLocalPlayer.sprite;
         currentPlayer.weapon = tempLocalPlayer.weapon;
         currentPlayer.shield = tempLocalPlayer.shield;        
         currentPlayer.hat = tempLocalPlayer.hat;
+        currentPlayer.smokeEmitter = tempLocalPlayer.smokeEmitter;
 
         currentPlayer.hat.tint = "0x" + player.color.replace('#', '');
         currentPlayer.weapon.tint = "0x" + player.color.replace('#', '');
@@ -311,6 +331,8 @@ var createSocketEvents = function () {
     });
     
     socket.on(Constants.CommandNames.NewLoginInfo, function (player) {
+        player.isRunning = false;
+        player.onDefendMode = false;
         player.sprite = game.add.sprite(player.position.x, player.position.y, 'player');
         player.sprite.anchor.setTo(0.5, 0.5);
         player.hat = game.add.sprite(player.position.x, player.position.y, 'playerHat');
@@ -327,6 +349,9 @@ var createSocketEvents = function () {
         //style.fill = player.color;
         player.nicknameText = game.add.text(0, 0, player.nickname, style);
         player.nicknameText.anchor.set(0.5);
+        
+        player.smokeEmitter = game.add.emitter(0, 500, 400);
+        player.smokeEmitter.makeParticles('smokeParticle');
         
         player.healthBar = new HealthBar(game, {
             width: 35,
@@ -413,6 +438,15 @@ var createSocketEvents = function () {
         });
     });
     
+    socket.on(Constants.CommandNames.GameMechanicsDataUpdate, function (gameMechanicsData) {        
+        for (var key in gameMechanicsData) {
+            var gameMechanicsDataValues = gameMechanicsData[key];
+            //console.log("player " + playerList[key].nickname + "is running:" + gameMechanicsDataValues.isRunning);          
+            playerList[key].isRunning = gameMechanicsDataValues.isRunning;
+            playerList[key].onDefendMode = gameMechanicsDataValues.onDefendMode;
+        }       
+    });
+    
     socket.on(Constants.CommandNames.KillCountUpdate, function (killCountData) {
         killCountList = [];
         for (var key in killCountData) {
@@ -497,6 +531,7 @@ var checkMovement = function (socket) {
     
     if (shiftKey.isDown) {
         socket.emit(Constants.EventNames.OnShiftKeyPressed, true);
+        //burstSmoke(currentPlayer);
     }
     
     if (eKey.isDown) {
@@ -566,6 +601,18 @@ var checkActions = function (socket) {
         attack(socket);
     }, this);
 };
+
+function burstSmoke(clientPlayer) {    
+    clientPlayer.smokeEmitter.x = clientPlayer.sprite.position.x;
+    clientPlayer.smokeEmitter.y = clientPlayer.sprite.position.y;    
+    clientPlayer.smokeEmitter.setScale(0.05, 0.75, 0.05, 0.75, 5000, Phaser.Easing.Quintic.Out);
+    clientPlayer.smokeEmitter.setXSpeed(-50, 50);
+    clientPlayer.smokeEmitter.setYSpeed(-50, 50);
+    clientPlayer.smokeEmitter.gravity = 0;    
+    clientPlayer.smokeEmitter.setRotation(100, 1);
+    clientPlayer.smokeEmitter.setAlpha(0.1, 0, 5000);
+    clientPlayer.smokeEmitter.start(true, 5000, null, 1);
+}
 
 function particleBurst(pointer) {
     

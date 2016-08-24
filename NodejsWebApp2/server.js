@@ -255,6 +255,7 @@ var processWorld = function (deltaTime) {
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.clicnetGameMechanicsUpdateFrequencyFromSeconds, sendAllPlayersClientMechanicsInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersKillCountInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.randomBonusGenerationProcess, createRandomBonuses);
@@ -453,6 +454,21 @@ var sendAllPlayersDamageDealthInfo = function () {
 var sendAllPlayersKillCountInfo = function () {
     io.emit(Constants.CommandNames.KillCountUpdate, killCountData);
 };
+
+var sendAllPlayersClientMechanicsInfo = function () {
+    var gameMechanicsData = {};
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];
+        if (body.isBodyAlive) {
+            var player = body;            
+            gameMechanicsData[player.id] = {
+                isRunning: player.isRunning,
+                onDefendMode: player.DefendMode
+            };            
+        }
+    }
+    io.emit(Constants.CommandNames.GameMechanicsDataUpdate, gameMechanicsData);
+}
 
 var sendGameTimeToAllClients = function () {
     io.emit("tick", Math.floor(totalElapsedTimeFromSeconds));
