@@ -53,6 +53,7 @@
     <Content Include="public\assets\audio\effects\fx_mixdown.ogg" />
     <Content Include="public\assets\audio\effects\lazer.wav" />
     <Content Include="public\assets\particles\smoke-puff.png" />
+    <Content Include="public\assets\particles\stone.png" />
     <Content Include="public\assets\sprites\bigHat.png" />
     <Content Include="public\assets\sprites\bonus.png" />
     <Content Include="public\assets\sprites\items\potions\healthPotion.png" />
