@@ -481,6 +481,7 @@ var createSocketEvents = function () {
             bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'healthPot');
         } else if (bonusInfo.type == "stamina") {
             bonus = game.add.sprite(bonusInfo.position.x, bonusInfo.position.y, 'stamPot');
+            bonus.tint = "0x" + currentPlayer.color.replace('#', '');;
         }
         bonus.anchor.setTo(0.5, 0.5);
         //bonus.tint = "0x" + bonusInfo.color.replace('#', '');;
@@ -623,8 +624,8 @@ function burstSmoke(clientPlayer) {
     clientPlayer.smokeEmitter.x = clientPlayer.sprite.position.x;
     clientPlayer.smokeEmitter.y = clientPlayer.sprite.position.y;
     clientPlayer.smokeEmitter.setScale(0.05, 0.3, 0.05, 0.3, 5000, Phaser.Easing.Quintic.Out);
-    clientPlayer.smokeEmitter.setXSpeed(-50, 50);
-    clientPlayer.smokeEmitter.setYSpeed(-50, 50);
+    clientPlayer.smokeEmitter.setXSpeed(-40, 40);
+    clientPlayer.smokeEmitter.setYSpeed(-40, 40);
     clientPlayer.smokeEmitter.gravity = 0;
     clientPlayer.smokeEmitter.setRotation(-200, 200);
     clientPlayer.smokeEmitter.setAlpha(0.2, 0, 4500);
