@@ -5,7 +5,7 @@
         gameTimeUpdateFrequencyFromSeconds : 1,
         healthStaminaUpdateFrequencyFromSeconds : 1 / 10,
         positionAndRotationUpdateFrequencyFromSeconds : 1 / 30,
-        clicnetGameMechanicsUpdateFrequencyFromSeconds : 1/10,
+        clientGameMechanicsUpdateFrequencyFromSeconds : 1/10,
         scoreUpdateFrequencyFromSeconds: 1,
         randomBonusGenerationProcess : 1        
     },
@@ -15,8 +15,8 @@
             height:1920
         },
         slashRate: 0.5,
-        staminaIncreaseFrequencyFromSeconds: 1,
-        staminaIncreaseRate: 1,
+        staminaIncreaseFrequencyFromSeconds: 10/60,
+        staminaIncreaseRate: 0.25,
         staminaDecreaseRateWhileRunning: 0.25,
         movementSpeed : 1,
         defendSpeed : 0.5,

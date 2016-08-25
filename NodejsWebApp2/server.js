@@ -241,21 +241,20 @@ world.on('beginContact', function (evt) {
 });
 
 // core game functions
-var processWorld = function (deltaTime) {
-    try {
+var processWorld = function (deltaTime) {       
+    try {        
         world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
     } catch (e) {
         logger.log("Error occurred at world.step(). message: " + e);
     };
-
-    
+       
     clearRemovedBodies();
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);
 
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
-    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.clicnetGameMechanicsUpdateFrequencyFromSeconds, sendAllPlayersClientMechanicsInfo);
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.clientGameMechanicsUpdateFrequencyFromSeconds, sendAllPlayersClientMechanicsInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersDamageDealthInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersKillCountInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.randomBonusGenerationProcess, createRandomBonuses);
