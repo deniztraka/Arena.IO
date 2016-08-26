@@ -8,7 +8,7 @@ var bonus = function (type) {
             return "#00aaff";//blue
         }
     }
-
+    this.isBodyAlive = false;
     this.bonusType = type;
     this.bodyType = "bonus";
     p2.Body.call(this, {
