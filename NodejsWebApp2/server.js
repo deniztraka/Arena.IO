@@ -248,15 +248,12 @@ var processWorld = function (deltaTime) {
         logger.log("Error occurred at world.step(). message: " + e);
     };
     
-    // CheckWorldBounds for all players
-    for (var i = 0; i < world.bodies.length; i++) {
-        checkWorldBounds(world.bodies[i]);
-    }
+    // force all players to be in world gameplay bounds
+    checkWorldBounds(world);    
     
     clearRemovedBodies();
     
-    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);
-    
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);    
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.clientGameMechanicsUpdateFrequencyFromSeconds, sendAllPlayersClientMechanicsInfo);
@@ -265,26 +262,29 @@ var processWorld = function (deltaTime) {
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.randomBonusGenerationProcess, createRandomBonuses);
 };
 
-function checkWorldBounds(body) {
-    if (body.isBodyAlive) {
-        var p = body.position;
-        var offSet = 30;
-        if (p[0] > serverConfig.gamePlay.worldBounds.width - offSet) {
-            p[0] = serverConfig.gamePlay.worldBounds.width - offSet;
+function checkWorldBounds(world) {
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];       
+        if (body.isBodyAlive) {
+            var p = body.position;
+            var offSet = 30;
+            if (p[0] > serverConfig.gamePlay.worldBounds.width - offSet) {
+                p[0] = serverConfig.gamePlay.worldBounds.width - offSet;
+            }
+            if (p[1] > serverConfig.gamePlay.worldBounds.height - offSet) {
+                p[1] = serverConfig.gamePlay.worldBounds.height - offSet;
+            }
+            if (p[0] < offSet) {
+                p[0] = offSet;
+            }
+            if (p[1] < offSet) {
+                p[1] = offSet;
+            }
+            
+            // Set the previous position too, to not mess up the p2 body interpolation
+            body.previousPosition[0] = p[0];
+            body.previousPosition[1] = p[1];
         }
-        if (p[1] > serverConfig.gamePlay.worldBounds.height - offSet) {
-            p[1] = serverConfig.gamePlay.worldBounds.height - offSet;
-        }
-        if (p[0] < offSet) {
-            p[0] = offSet;
-        }
-        if (p[1] < offSet) {
-            p[1] = offSet;
-        }
-        
-        // Set the previous position too, to not mess up the p2 body interpolation
-        body.previousPosition[0] = p[0];
-        body.previousPosition[1] = p[1];
     }
 }
 
