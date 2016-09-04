@@ -1,7 +1,7 @@
 ﻿module.exports = {
     server: {
         serverProcessFrequency : 1 / 60,
-        maxSubSteps: 10,
+        maxSubSteps: 30,
         gameTimeUpdateFrequencyFromSeconds : 1,
         healthStaminaUpdateFrequencyFromSeconds : 1 / 10,
         positionAndRotationUpdateFrequencyFromSeconds : 1 / 30,

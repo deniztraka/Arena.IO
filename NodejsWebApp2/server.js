@@ -48,12 +48,12 @@ function attachEvents(socket, player) {
     socket.on(Constants.EventNames.OnPlayerDisconnect, function () {
         onPlayerDisconnect(player, socket);
     });
-
+    
     //attach mouse events
     socket.on(Constants.EventNames.OnMouseClicked, function (mousePosition) {
         onMouseClicked(player, mousePosition);
     });
-
+    
     //attach movement events
     socket.on(Constants.EventNames.OnUpKeyPressed, function () {
         onUpKeyPressed(player);
@@ -84,17 +84,17 @@ var onPlayerConnect = function (socket, io) {
     //firstly send already logged in playerList to the sender
     socket.emit(Constants.CommandNames.AlreadyLoggedInPlayerList, getClientPlayerList());
     socket.emit(Constants.CommandNames.CurrentBonusListInfo, getActiveBonusClientInfoList());
-
+    
     //player is created
     var player = createPlayer(socket);
     logger.log(player.nickname + " is joined the server.");
-
+    
     //send playerInfo to the sender
     socket.emit(Constants.CommandNames.PlayerInfo, player.clientInfo);
-
+    
     //send playerInfo to the all clients except sender
     socket.broadcast.emit(Constants.CommandNames.NewLoginInfo, player.clientInfo);
-
+    
     attachEvents(socket, player);
 };
 
@@ -164,12 +164,12 @@ var updateRotation = function (player, mousePosition) {
 setInterval(function () {
     totalElapsedTimeFromSeconds += serverConfig.server.serverProcessFrequency;
     deltaTime = totalElapsedTimeFromSeconds - lastTimeSeconds;
-
+    
     processWorld(deltaTime);
-
+    
     //Sending elapsed game time to all clients
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.gameTimeUpdateFrequencyFromSeconds, sendGameTimeToAllClients);
-
+    
     lastTimeSeconds = totalElapsedTimeFromSeconds;
 }, 1000 * serverConfig.server.serverProcessFrequency);
 
@@ -178,17 +178,17 @@ world.on('beginContact', function (evt) {
     var humanBody = null;
     var weaponBody = null;
     var bonusBody = null;
-
+    
     //if body types are equal return
     if (evt.bodyA.bodyType == evt.bodyB.bodyType) {
         return;
     }
-
+    
     //if one of body types are shield return
     if (evt.bodyA.bodyType == "shield" || evt.bodyB.bodyType == "shield") {
         return;
     }
-
+    
     //if one of body types are bonus
     if (evt.bodyA.bodyType == "bonus" || evt.bodyB.bodyType == "bonus") {
         //set human and bonus body
@@ -199,16 +199,16 @@ world.on('beginContact', function (evt) {
             humanBody = evt.bodyA;
             bonusBody = evt.bodyB;
         }
-
+        
         bonusBody.setEffect(humanBody);
         kill(bonusBody);
-
+        
         return;
     }
-
+    
     //if one of body types are weapon
     if (evt.bodyA.bodyType == "weapon" || evt.bodyB.bodyType == "weapon") {
-
+        
         //setting human or weapon body
         if (evt.bodyA.bodyType == "weapon") {
             if (evt.bodyA.playerId == evt.bodyB.id) {//eger silah kendininse 
@@ -225,12 +225,12 @@ world.on('beginContact', function (evt) {
                 humanBody = evt.bodyA;
             }
         }
-
+        
         //processing damage
         var attacker = world.getBodyById(weaponBody.playerId);
         humanBody.health -= weaponBody.damage;
         damageDealtData[weaponBody.playerId] += weaponBody.damage;  //update player total damage dealt
-
+        
         io.emit("animAttack", { x: humanBody.position[0], y: humanBody.position[1] });//sending damage dealt position for client animation - should be updated ( calculate in client )
         if (humanBody.health <= 0) {
             io.emit(Constants.CommandNames.Killed, humanBody.clientInfo);//send playerInfo to the all clients
@@ -241,17 +241,19 @@ world.on('beginContact', function (evt) {
 });
 
 // core game functions
-var processWorld = function (deltaTime) {       
-    try {        
+var processWorld = function (deltaTime) {
+    try {
         world.step(serverConfig.server.serverProcessFrequency, deltaTime, serverConfig.server.maxSubSteps);
     } catch (e) {
         logger.log("Error occurred at world.step(). message: " + e);
     };
-       
+    
+    // force all players to be in world gameplay bounds
+    checkWorldBounds(world);    
+    
     clearRemovedBodies();
-
-    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);
-
+    
+    utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.gamePlay.staminaIncreaseFrequencyFromSeconds, utilizeStaminaIncrease);    
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.healthStaminaUpdateFrequencyFromSeconds, sendAllPlayersHealthStaminaInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.positionAndRotationUpdateFrequencyFromSeconds, sendPosRotData);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.clientGameMechanicsUpdateFrequencyFromSeconds, sendAllPlayersClientMechanicsInfo);
@@ -259,6 +261,32 @@ var processWorld = function (deltaTime) {
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.scoreUpdateFrequencyFromSeconds, sendAllPlayersKillCountInfo);
     utils.executeByIntervalFromSeconds(totalElapsedTimeFromSeconds, serverConfig.server.randomBonusGenerationProcess, createRandomBonuses);
 };
+
+function checkWorldBounds(world) {
+    for (var i = 0; i < world.bodies.length; i++) {
+        var body = world.bodies[i];       
+        if (body.isBodyAlive) {
+            var p = body.position;
+            var offSet = 30;
+            if (p[0] > serverConfig.gamePlay.worldBounds.width - offSet) {
+                p[0] = serverConfig.gamePlay.worldBounds.width - offSet;
+            }
+            if (p[1] > serverConfig.gamePlay.worldBounds.height - offSet) {
+                p[1] = serverConfig.gamePlay.worldBounds.height - offSet;
+            }
+            if (p[0] < offSet) {
+                p[0] = offSet;
+            }
+            if (p[1] < offSet) {
+                p[1] = offSet;
+            }
+            
+            // Set the previous position too, to not mess up the p2 body interpolation
+            body.previousPosition[0] = p[0];
+            body.previousPosition[1] = p[1];
+        }
+    }
+}
 
 function clearRemovedBodies() {
     if (bodyRemovalList.length > 0) {
@@ -274,15 +302,15 @@ function clearRemovedBodies() {
                 delete damageDealtData[body.id];
                 delete killCountData[body.id];
                 body.socket.disconnect();
-            } else if (body.bodyType == "bonus") {                
+            } else if (body.bodyType == "bonus") {
                 var bonusIndex = activeBonusList.indexOf(body);
                 if (bonusIndex > -1) {
                     activeBonusList.splice(bonusIndex, 1);
                     world.removeBody(body);
                     io.emit(Constants.CommandNames.RemoveBonus, body.clientInfo);//sending bonusbody.clientInfo to all players for removing                    
-                    logger.log(body.bonusType + " bonus is removed at x:" + body.position[0] + " y:" + body.position[1] + " | total:" + activeBonusList.length);                        
+                    logger.log(body.bonusType + " bonus is removed at x:" + body.position[0] + " y:" + body.position[1] + " | total:" + activeBonusList.length);
                 }
-            }            
+            }
         }
         bodyRemovalList = [];
     }
@@ -304,7 +332,7 @@ var getActiveBonusClientInfoList = function () {
     var clientList = {}
     for (var key in activeBonusList) {
         var bonus = activeBonusList[key];
-
+        
         clientList[key] = bonus.clientInfo;
     }
     return clientList;
@@ -338,26 +366,26 @@ function createPlayer(socket) {
     world.addBody(player.weapon);
     world.addBody(player.shield);
     world.addBody(player);
-
+    
     var oldShieldPosition = player.shield.position;
     var oldShieldAngle = player.shield.angle;
-
+    
     //This will lock weapon and shield to player    
     player.weaponConstraint = new p2.LockConstraint(player, player.weapon, { collideConnected: false });
     world.addConstraint(player.weaponConstraint);
     player.shieldConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
-
+    
     //Set defend constraint    
     player.shield.position = [player.position[0] - 3, player.position[1] - 23];
     player.shield.angle = 0;
     player.defendConstraint = new p2.LockConstraint(player, player.shield, { collideConnected: false });
-
+    
     //Add sheild constraint to world
     player.shield.position = oldShieldPosition;
     player.shield.angle = oldShieldAngle;
     world.addConstraint(player.shieldConstraint);
-
-
+    
+    
     //assign damage dealt and killCount data of player
     damageDealtData[player.id] = 0;
     killCountData[player.id] = 0;
@@ -381,7 +409,7 @@ function createRandomBonuses() {
     var maxActiveBonusCount = maxRand;
     var chance = maxActiveBonusCount * 0.02;
     if (activeBonusList.length <= maxActiveBonusCount) {
-        var chosenRandom = utils.random(0, maxRand);        
+        var chosenRandom = utils.random(0, maxRand);
         //logger.log("online:" + onlineCount  + " | " + random + " < " + chance);
         if (chosenRandom < chance) {
             //get random bonus type
@@ -389,26 +417,26 @@ function createRandomBonuses() {
             //add to world
             var bonus = new Bonus(bonusType);
             addBonusToWorld(bonus);
-            logger.log(bonusType + " bonus is created at x:" + bonus.position[0] + " y:" + bonus.position[1] + " | total:" + activeBonusList.length);            
-        } 
+            logger.log(bonusType + " bonus is created at x:" + bonus.position[0] + " y:" + bonus.position[1] + " | total:" + activeBonusList.length);
+        }
     }
 }
 
 function addBonusToWorld(bonus) {
     world.addBody(bonus);
     activeBonusList.push(bonus);
-    io.emit(Constants.CommandNames.CreateBonus, bonus.clientInfo);       
+    io.emit(Constants.CommandNames.CreateBonus, bonus.clientInfo);
 }
 
 // update functions
 var sendPosRotData = function () {
     var playerPosRotData = {};
-
+    
     for (var i = 0; i < world.bodies.length; i++) {
         var body = world.bodies[i];
         if (body.isBodyAlive) {
             var player = body;
-
+            
             playerPosRotData[player.id] = {
                 x: player.interpolatedPosition[0],
                 y: player.interpolatedPosition[1],
@@ -427,7 +455,7 @@ var sendPosRotData = function () {
             };
         }
     };
-
+    
     io.emit(Constants.CommandNames.PlayerPosRotUpdate, playerPosRotData);
 };
 
@@ -459,11 +487,11 @@ var sendAllPlayersClientMechanicsInfo = function () {
     for (var i = 0; i < world.bodies.length; i++) {
         var body = world.bodies[i];
         if (body.isBodyAlive) {
-            var player = body;            
+            var player = body;
             gameMechanicsData[player.id] = {
                 isRunning: player.isRunning,
                 onDefendMode: player.DefendMode
-            };            
+            };
         }
     }
     io.emit(Constants.CommandNames.GameMechanicsDataUpdate, gameMechanicsData);

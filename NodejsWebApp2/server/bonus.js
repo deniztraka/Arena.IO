@@ -8,12 +8,12 @@ var bonus = function (type) {
             return "#00aaff";//blue
         }
     }
-
+    this.isBodyAlive = false;
     this.bonusType = type;
     this.bodyType = "bonus";
     p2.Body.call(this, {
         mass: 1,
-        position: [Math.floor(1920 * Math.random()), Math.floor(1920 * Math.random())],
+        position: [Math.floor(serverConfig.gamePlay.worldBounds.width * Math.random()), Math.floor(serverConfig.gamePlay.worldBounds.height * Math.random())],
         type: p2.Body.DYNAMIC
     });
     this.damping = 1;
