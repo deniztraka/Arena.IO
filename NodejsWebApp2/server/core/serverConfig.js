@@ -14,12 +14,12 @@
             width: 1920,
             height:1920
         },
-        slashRate: 0.5,
+        slashRate: 0.25,
         staminaIncreaseFrequencyFromSeconds: 10/60,
         staminaIncreaseRate: 0.25,
         staminaDecreaseRateWhileRunning: 0.25,
-        movementSpeed : 1,
-        defendSpeed : 0.5,
+        movementSpeed : 1.5,
+        defendSpeed : 0.75,
         runningSpeedMultiplier: 1.75,
         maxActiveBonusCount: 10,
         bonusTypes: ["health","stamina"]
