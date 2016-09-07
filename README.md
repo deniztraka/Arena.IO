@@ -1,4 +1,4 @@
-# Glad.IO
+# Arena.IO
 multiplayer browser game messup
 
 Server Side:
